@@ -246,11 +246,11 @@
           `${envVarName}=${JSON.stringify(tenantConfig)}`;
 
         const clientLines = [
-          `MAILBRIDGE_URL=${window.location.origin}`,
-          `MAILBRIDGE_APP_ID=${rawId}`,
-          `MAILBRIDGE_API_KEY=${rawApiKey}`,
+          `MAILBRIX_URL=${window.location.origin}`,
+          `MAILBRIX_APP_ID=${rawId}`,
+          `MAILBRIX_API_KEY=${rawApiKey}`,
         ];
-        if (signingSecret) clientLines.push(`MAILBRIDGE_SIGNING_SECRET=${signingSecret}`);
+        if (signingSecret) clientLines.push(`MAILBRIX_SIGNING_SECRET=${signingSecret}`);
         document.getElementById("gen-client-out").textContent = clientLines.join("\n");
 
         const out = document.getElementById("gen-output");

@@ -1,13 +1,13 @@
-"""Minimal sample client for calling the Mailbridge email relay service.
+"""Minimal sample client for calling the Mailbrix email relay service.
 
 Uses only the Python standard library so it can be copied into any project
 without extra dependencies.
 
 Usage:
-    export MAILBRIDGE_URL="http://localhost:3000"
-    export MAILBRIDGE_APP_ID="my-app"
-    export MAILBRIDGE_API_KEY="er_your_raw_api_key"
-    export MAILBRIDGE_SIGNING_SECRET="your_hmac_signing_secret"  # optional
+    export MAILBRIX_URL="http://localhost:3000"
+    export MAILBRIX_APP_ID="my-app"
+    export MAILBRIX_API_KEY="er_your_raw_api_key"
+    export MAILBRIX_SIGNING_SECRET="your_hmac_signing_secret"  # optional
     python3 examples/send_email.py
 """
 
@@ -23,8 +23,8 @@ import uuid
 from typing import Any, Dict, List, Optional, Union
 
 
-class MailbridgeClient:
-    """HTTP client for sending emails through Mailbridge."""
+class MailbrixClient:
+    """HTTP client for sending emails through Mailbrix."""
 
     def __init__(
         self,
@@ -41,12 +41,12 @@ class MailbridgeClient:
         self.timeout = timeout
 
     @classmethod
-    def from_env(cls) -> "MailbridgeClient":
-        """Create a client from MAILBRIDGE_* environment variables."""
-        base_url = os.environ["MAILBRIDGE_URL"]
-        api_key = os.environ["MAILBRIDGE_API_KEY"]
-        app_id = os.getenv("MAILBRIDGE_APP_ID") or None
-        signing_secret = os.getenv("MAILBRIDGE_SIGNING_SECRET") or None
+    def from_env(cls) -> "MailbrixClient":
+        """Create a client from MAILBRIX_* environment variables."""
+        base_url = os.environ["MAILBRIX_URL"]
+        api_key = os.environ["MAILBRIX_API_KEY"]
+        app_id = os.getenv("MAILBRIX_APP_ID") or None
+        signing_secret = os.getenv("MAILBRIX_SIGNING_SECRET") or None
         return cls(
             base_url=base_url,
             api_key=api_key,
@@ -119,19 +119,19 @@ class MailbridgeClient:
                 return json.loads(resp.read().decode("utf-8"))
         except urllib.error.HTTPError as exc:
             detail = exc.read().decode("utf-8", errors="replace")
-            raise RuntimeError(f"Mailbridge error {exc.code}: {detail}") from exc
+            raise RuntimeError(f"Mailbrix error {exc.code}: {detail}") from exc
 
 
 def main() -> None:
-    client = MailbridgeClient.from_env()
+    client = MailbrixClient.from_env()
     recipient = os.getenv("TEST_TO_EMAIL", "recipient@example.com")
 
-    attachment_bytes = b"Hello from Mailbridge sample client!\n"
+    attachment_bytes = b"Hello from Mailbrix sample client!\n"
     result = client.send_email(
         to_email=recipient,
-        subject="Hello from Mailbridge",
-        html_content="<h1>Hello</h1><p>Sent via Mailbridge.</p>",
-        text_content="Hello\nSent via Mailbridge.",
+        subject="Hello from Mailbrix",
+        html_content="<h1>Hello</h1><p>Sent via Mailbrix.</p>",
+        text_content="Hello\nSent via Mailbrix.",
         attachments=[
             {
                 "filename": "hello.txt",

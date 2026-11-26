@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Mailbridge — HTTP-to-SMTP Email Relay</title>
+  <title>Mailbrix — HTTP-to-SMTP Email Relay</title>
   <meta name="description" content="Multi-tenant FastAPI HTTP-to-SMTP email relay with hashed API keys, HMAC signing, and per-app rate limits.">
   <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#09090b" media="(prefers-color-scheme: dark)">
@@ -19,12 +19,12 @@
     <div class="container topbar-inner">
       <div class="brand">
         <img class="brand-logo" src="/icon.svg" alt="" width="26" height="26">
-        <span>Mailbridge</span>
+        <span>Mailbrix</span>
       </div>
       <div class="topbar-actions">
         <button type="button" id="theme-toggle" class="icon-btn" aria-label="Toggle color theme">Auto</button>
         <a class="icon-btn hide-mobile" href="/health">Health</a>
-        <a class="icon-btn" href="https://github.com/akdey/mailbridge" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <a class="icon-btn" href="https://github.com/akdey/mailbrix" target="_blank" rel="noopener noreferrer">GitHub</a>
       </div>
     </div>
   </header>
@@ -56,7 +56,7 @@
     </section>
 
     <section class="tabs-section" aria-label="Documentation">
-      <div class="tablist" focusgroup="tablist nomemory" aria-label="Mailbridge integration guide">
+      <div class="tablist" focusgroup="tablist nomemory" aria-label="Mailbrix integration guide">
         <button type="button" id="tab-overview" aria-selected="true" focusgroupstart>Overview</button>
         <button type="button" id="tab-register">1. Register App</button>
         <button type="button" id="tab-api">2. Send Email</button>
@@ -129,7 +129,7 @@
             </div>
 
             <div id="gen-output" class="gen-output" hidden>
-              <h3>1. Send to Mailbridge (Server Env)</h3>
+              <h3>1. Send to Mailbrix (Server Env)</h3>
               <div class="code-wrap">
                 <div class="code-header">
                   <span>env (server)</span>
@@ -138,7 +138,7 @@
                 <pre><code id="gen-server-out"></code></pre>
               </div>
               <div class="callout">
-                <strong>Using this hosted instance?</strong> Share the <code>TENANT_&lt;APP&gt;</code> line above privately with the Mailbridge maintainer to register your app. Keep <code>MAILBRIDGE_API_KEY</code> strictly in your own app.
+                <strong>Using this hosted instance?</strong> Share the <code>TENANT_&lt;APP&gt;</code> line above privately with the Mailbrix maintainer to register your app. Keep <code>MAILBRIX_API_KEY</code> strictly in your own app.
               </div>
 
               <h3>2. Add to Your Calling App (<code>.env</code>)</h3>
@@ -152,7 +152,7 @@
             </div>
 
             <details class="self-host-details">
-              <summary>Self-Hosting Mailbridge? (SMTP &amp; CLI Setup)</summary>
+              <summary>Self-Hosting Mailbrix? (SMTP &amp; CLI Setup)</summary>
               <div class="self-host-body">
                 <p>Configure your SMTP provider (for Gmail, use a 16-char App Password from <code>myaccount.google.com/apppasswords</code>):</p>
                 <div class="code-wrap">
@@ -228,15 +228,15 @@ DEFAULT_FROM_NAME=No-Reply</code></pre>
                 <span>bash</span>
                 <button type="button" class="copy-btn" data-copy-target="cmd-curl">Copy</button>
               </div>
-              <pre><code id="cmd-curl">curl -X POST https://mailbridge-akdey.vercel.app/send \
+              <pre><code id="cmd-curl">curl -X POST https://mailbrix-akdey.vercel.app/send \
   -H "Content-Type: application/json" \
   -H "X-App-Id: my-app" \
   -H "X-API-Key: er_your_raw_api_key" \
   -d '{
     "to_email": "user@example.com",
     "subject": "Welcome",
-    "html_content": "&lt;h1&gt;Hello&lt;/h1&gt;&lt;p&gt;Sent via Mailbridge.&lt;/p&gt;",
-    "text_content": "Hello\nSent via Mailbridge."
+    "html_content": "&lt;h1&gt;Hello&lt;/h1&gt;&lt;p&gt;Sent via Mailbrix.&lt;/p&gt;",
+    "text_content": "Hello\nSent via Mailbrix."
   }'</code></pre>
             </div>
           </div>
@@ -245,7 +245,7 @@ DEFAULT_FROM_NAME=No-Reply</code></pre>
         <div role="tabpanel" aria-labelledby="tab-skill" hidden="until-found">
           <div class="panel-inner">
             <h2>Client Env &amp; Agent Skill</h2>
-            <p>Install <code>SKILL.md</code> in your calling app repo so any AI coding agent can integrate Mailbridge automatically.</p>
+            <p>Install <code>SKILL.md</code> in your calling app repo so any AI coding agent can integrate Mailbrix automatically.</p>
 
             <h3>Install Skill</h3>
             <div class="code-wrap">
@@ -253,10 +253,10 @@ DEFAULT_FROM_NAME=No-Reply</code></pre>
                 <span>bash</span>
                 <button type="button" class="copy-btn" data-copy-target="cmd-skill-install">Copy</button>
               </div>
-              <pre><code id="cmd-skill-install">mkdir -p .agent/skills/mailbridge &amp;&amp; curl -sSL https://mailbridge-akdey.vercel.app/SKILL.md -o .agent/skills/mailbridge/SKILL.md</code></pre>
+              <pre><code id="cmd-skill-install">mkdir -p .agent/skills/mailbrix &amp;&amp; curl -sSL https://mailbrix-akdey.vercel.app/SKILL.md -o .agent/skills/mailbrix/SKILL.md</code></pre>
             </div>
 
-            <h3><code>.agent/skills/mailbridge/SKILL.md</code></h3>
+            <h3><code>.agent/skills/mailbrix/SKILL.md</code></h3>
             <div class="code-wrap">
               <div class="code-header">
                 <span>markdown</span>
@@ -266,29 +266,29 @@ DEFAULT_FROM_NAME=No-Reply</code></pre>
                 </div>
               </div>
               <pre><code id="agent-skill">---
-name: mailbridge
-description: Integrates transactional email sending into any application using the Mailbridge HTTP-to-SMTP relay service (API key auth, optional HMAC-SHA256 signing, attachments, and error handling).
+name: mailbrix
+description: Integrates transactional email sending into any application using the Mailbrix HTTP-to-SMTP relay service (API key auth, optional HMAC-SHA256 signing, attachments, and error handling).
 ---
 
-# Mailbridge Email Integration
+# Mailbrix Email Integration
 
-Use this skill when adding transactional email sending to an application via Mailbridge (`https://mailbridge-akdey.vercel.app`).
+Use this skill when adding transactional email sending to an application via Mailbrix (`https://mailbrix-akdey.vercel.app`).
 
 ## 1. Environment Variables
-- `MAILBRIDGE_URL`: Base URL of Mailbridge (`https://mailbridge-akdey.vercel.app`)
-- `MAILBRIDGE_APP_ID`: Tenant identifier sent in `X-App-Id` (e.g., `my-app`)
-- `MAILBRIDGE_API_KEY`: Secret API key sent in `X-API-Key` (`er_...`)
-- `MAILBRIDGE_SIGNING_SECRET`: Optional 64-char hex HMAC-SHA256 secret
+- `MAILBRIX_URL`: Base URL of Mailbrix (`https://mailbrix-akdey.vercel.app`)
+- `MAILBRIX_APP_ID`: Tenant identifier sent in `X-App-Id` (e.g., `my-app`)
+- `MAILBRIX_API_KEY`: Secret API key sent in `X-API-Key` (`er_...`)
+- `MAILBRIX_SIGNING_SECRET`: Optional 64-char hex HMAC-SHA256 secret
 
-## 2. API Contract (`POST {MAILBRIDGE_URL}/send`)
-- **Headers:** `Content-Type: application/json`, `X-API-Key`, `X-App-Id`, plus `X-Timestamp`, `X-Nonce`, `X-Signature` (`HMAC-SHA256(secret, f"{ts}.{nonce}.{raw_json_body}")`) when `MAILBRIDGE_SIGNING_SECRET` is set.
+## 2. API Contract (`POST {MAILBRIX_URL}/send`)
+- **Headers:** `Content-Type: application/json`, `X-API-Key`, `X-App-Id`, plus `X-Timestamp`, `X-Nonce`, `X-Signature` (`HMAC-SHA256(secret, f"{ts}.{nonce}.{raw_json_body}")`) when `MAILBRIX_SIGNING_SECRET` is set.
 - **JSON Body:** `to_email` (string or array), `subject`, `html_content` and/or `text_content`, optional `reply_to`, `cc`, `bcc`, `attachments`.
 - **Response (`200 OK`):** `{ "status": "sent", "request_id": "...", "app_id": "...", "recipients": [...] }`
 
 ## 3. Requirements
 1. Create a reusable email client module matching the project's conventions.
 2. Compute `X-Signature` over the exact raw JSON bytes sent in the HTTP body.
-3. Document `MAILBRIDGE_*` in `.env.example` and never log secrets.
+3. Document `MAILBRIX_*` in `.env.example` and never log secrets.
 4. Add unit tests mocking the HTTP call.</code></pre>
             </div>
           </div>
@@ -299,7 +299,7 @@ Use this skill when adding transactional email sending to an application via Mai
 
   <footer>
     <p style="margin: 0;">
-      Mailbridge v2.0 &bull; Engineered by
+      Mailbrix v2.0 &bull; Engineered by
       <a class="creator-link" href="https://portfolio.akdey.vercel.app/" target="_blank" rel="noopener noreferrer">AMIT KUMAR DEY</a>
     </p>
   </footer>

@@ -65,21 +65,21 @@ def test_index_page():
     response = client.get("/")
     assert response.status_code == 200
     assert "text/html" in response.headers["content-type"]
-    assert "Mailbridge" in response.text
+    assert "Mailbrix" in response.text
 
 
 def test_pwa_assets():
     manifest = client.get("/manifest.webmanifest")
     assert manifest.status_code == 200
-    assert manifest.json()["short_name"] == "Mailbridge"
+    assert manifest.json()["short_name"] == "Mailbrix"
 
     sw = client.get("/sw.js")
     assert sw.status_code == 200
-    assert "mailbridge-shell" in sw.text
+    assert "mailbrix-shell" in sw.text
 
     skill = client.get("/SKILL.md")
     assert skill.status_code == 200
-    assert "name: mailbridge" in skill.text
+    assert "name: mailbrix" in skill.text
 
     css = client.get("/styles.css")
     assert css.status_code == 200

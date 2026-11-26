@@ -69,13 +69,13 @@ _SKILL_MD_PATH = _BASE_DIR / "examples" / "SKILL.md"
 
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
 def index_page():
-    """Serve the Mailbridge documentation and integration landing page."""
+    """Serve the Mailbrix documentation and integration landing page."""
     return HTMLResponse(content=_INDEX_HTML_PATH.read_text(encoding="utf-8"))
 
 
 @app.get("/SKILL.md", include_in_schema=False)
 def agent_skill():
-    """Serve the Mailbridge agent SKILL.md for calling apps."""
+    """Serve the Mailbrix agent SKILL.md for calling apps."""
     return FileResponse(_SKILL_MD_PATH, media_type="text/markdown; charset=utf-8")
 
 

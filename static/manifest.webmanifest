@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "Mailbridge — HTTP-to-SMTP Email Relay",
-  "short_name": "Mailbridge",
+  "name": "Mailbrix — HTTP-to-SMTP Email Relay",
+  "short_name": "Mailbrix",
   "description": "Multi-tenant FastAPI HTTP-to-SMTP email relay microservice.",
   "start_url": "/",
   "scope": "/",
