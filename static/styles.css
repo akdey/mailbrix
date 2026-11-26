@@ -344,6 +344,17 @@ a:hover {
   min-width: 0;
 }
 
+[role="tabpanel"][hidden] {
+  pointer-events: none;
+  visibility: hidden;
+  z-index: 0;
+}
+
+[role="tabpanel"]:not([hidden]) {
+  position: relative;
+  z-index: 1;
+}
+
 [role="tabpanel"]:focus-visible {
   outline: none;
 }
