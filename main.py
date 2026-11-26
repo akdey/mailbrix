@@ -1,10 +1,11 @@
 import asyncio
 import logging
 import uuid
+from pathlib import Path
 from typing import Optional
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, status
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import ValidationError
 
 from config import Settings, get_settings
@@ -60,7 +61,15 @@ async def security_and_size_middleware(request: Request, call_next):
     return response
 
 
-@app.get("/")
+_INDEX_HTML_PATH = Path(__file__).resolve().parent / "static" / "index.html"
+
+
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+def index_page():
+    """Serve the Mailbridge documentation and integration landing page."""
+    return HTMLResponse(content=_INDEX_HTML_PATH.read_text(encoding="utf-8"))
+
+
 @app.get("/health")
 def health_check(settings: Settings = Depends(get_settings)):
     """Health check endpoint."""

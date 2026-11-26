@@ -61,6 +61,13 @@ def test_health_check():
     assert response.headers["X-Frame-Options"] == "DENY"
 
 
+def test_index_page():
+    response = client.get("/")
+    assert response.status_code == 200
+    assert "text/html" in response.headers["content-type"]
+    assert "Mailbridge" in response.text
+
+
 def test_send_unauthorized():
     response = client.post(
         "/send",

@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mailbridge — HTTP-to-SMTP Email Relay</title>
+  <meta name="description" content="Multi-tenant FastAPI HTTP-to-SMTP email relay microservice with hashed API keys, HMAC request signing, and per-app rate limits.">
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #fafaf9;
+      --surface: #ffffff;
+      --surface-subtle: #f4f4f5;
+      --border: #e4e4e7;
+      --border-strong: #d4d4d8;
+      --text: #18181b;
+      --text-muted: #52525b;
+      --text-subtle: #71717a;
+      --accent: #18181b;
+      --accent-fg: #fafafa;
+      --link: #2563eb;
+      --ok: #10b981;
+      --code-bg: #18181b;
+      --code-fg: #f4f4f5;
+      --radius: 8px;
+      --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #09090b;
+        --surface: #111113;
+        --surface-subtle: #18181b;
+        --border: #27272a;
+        --border-strong: #3f3f46;
+        --text: #fafafa;
+        --text-muted: #a1a1aa;
+        --text-subtle: #71717a;
+        --accent: #fafafa;
+        --accent-fg: #09090b;
+        --link: #60a5fa;
+        --code-bg: #09090b;
+        --code-fg: #e4e4e7;
+      }
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--font-sans);
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--text);
+      background: var(--bg);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a {
+      color: var(--link);
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .container {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    /* Header */
+    .topbar {
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .topbar-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 56px;
+      gap: 16px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      font-size: 15px;
+      letter-spacing: -0.01em;
+      color: var(--text);
+    }
+    .brand-mark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      background: var(--accent);
+      color: var(--accent-fg);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .badge {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      background: var(--surface-subtle);
+    }
+    .topbar-links {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .topbar-links a {
+      color: var(--text-muted);
+    }
+    .topbar-links a:hover {
+      color: var(--text);
+      text-decoration: none;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--ok);
+    }
+
+    /* Hero */
+    .hero {
+      padding: 44px 0 32px;
+    }
+    .hero h1 {
+      margin: 0 0 12px;
+      font-size: clamp(24px, 4vw, 32px);
+      font-weight: 650;
+      letter-spacing: -0.025em;
+      line-height: 1.2;
+    }
+    .hero p {
+      margin: 0 0 24px;
+      color: var(--text-muted);
+      max-width: 660px;
+      font-size: 15.5px;
+    }
+
+    .spec-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .spec-cell {
+      background: var(--surface);
+      padding: 12px 14px;
+    }
+    .spec-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-subtle);
+      margin-bottom: 3px;
+    }
+    .spec-value {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      color: var(--text);
+      word-break: break-word;
+    }
+
+    /* Tabs (following modern-web-guidance tabs pattern) */
+    .tabs-section {
+      padding: 8px 0 56px;
+    }
+    .tablist {
+      display: flex;
+      overflow-x: auto;
+      gap: 4px;
+      border-bottom: 1px solid var(--border);
+      scrollbar-width: none;
+      scroll-snap-type: inline proximity;
+    }
+    .tablist::-webkit-scrollbar {
+      display: none;
+    }
+    .tablist button[role="tab"],
+    .tablist button {
+      position: relative;
+      flex: none;
+      scroll-snap-align: start;
+      appearance: none;
+      background: transparent;
+      border: 0;
+      padding: 10px 14px;
+      font-family: var(--font-sans);
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .tablist button:hover {
+      color: var(--text);
+    }
+    .tablist button[aria-selected="true"] {
+      color: var(--text);
+    }
+    .tablist button[aria-selected="true"]::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0;
+      border-block-end: 2px solid var(--text);
+    }
+    .tablist button:focus-visible {
+      outline: 2px solid var(--link);
+      outline-offset: -2px;
+      border-radius: 4px;
+    }
+
+    /* Stack panels in same grid cell; keep styling on .panel-inner */
+    .panels {
+      display: grid;
+    }
+    [role="tabpanel"] {
+      grid-area: 1 / 1;
+    }
+    [role="tabpanel"]:focus-visible {
+      outline: none;
+    }
+    .panel-inner {
+      margin-top: 20px;
+      padding: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .panel-inner h2 {
+      margin: 0 0 8px;
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: -0.015em;
+    }
+    .panel-inner h3 {
+      margin: 22px 0 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .panel-inner p {
+      margin: 0 0 12px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+    .panel-inner ul, .panel-inner ol {
+      margin: 0 0 14px;
+      padding-left: 20px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+    .panel-inner li {
+      margin-bottom: 6px;
+    }
+    code {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    /* Code blocks */
+    .code-wrap {
+      position: relative;
+      margin: 10px 0 18px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--code-bg);
+      overflow: hidden;
+    }
+    .code-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: #a1a1aa;
+    }
+    .copy-btn {
+      appearance: none;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: #e4e4e7;
+      font-family: var(--font-sans);
+      font-size: 11.5px;
+      padding: 3px 9px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .copy-btn:hover {
+      background: rgba(255, 255, 255, 0.14);
+    }
+    pre {
+      margin: 0;
+      padding: 14px;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      line-height: 1.55;
+      color: var(--code-fg);
+    }
+    pre code {
+      background: transparent;
+      border: 0;
+      padding: 0;
+      color: inherit;
+      font-size: inherit;
+    }
+
+    /* Tables */
+    .table-wrap {
+      overflow-x: auto;
+      margin: 10px 0 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+    th, td {
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    tr:last-child td {
+      border-bottom: 0;
+    }
+    th {
+      font-weight: 600;
+      font-size: 12px;
+      color: var(--text-muted);
+      background: var(--surface-subtle);
+    }
+    td {
+      color: var(--text-muted);
+    }
+    td:first-child {
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    /* Pipeline steps */
+    .pipeline {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      margin: 14px 0 18px;
+    }
+    .step-card {
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface-subtle);
+    }
+    .step-num {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-subtle);
+      margin-bottom: 4px;
+    }
+    .step-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
+    .step-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 20px 0 32px;
+      font-size: 12.5px;
+      color: var(--text-subtle);
+    }
+    .footer-inner {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 12px;
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <div class="brand">
+        <span class="brand-mark">M</span>
+        <span>Mailbridge</span>
+        <span class="badge">v2.0</span>
+      </div>
+      <nav class="topbar-links" aria-label="Primary">
+        <span class="status-pill"><span class="status-dot" aria-hidden="true"></span>Operational</span>
+        <a href="/health">Health JSON</a>
+        <a href="https://github.com/akdey/mailbridge" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <h1>Authenticated HTTP-to-SMTP email relay.</h1>
+      <p>
+        A lightweight, multi-tenant FastAPI microservice for sending transactional email from any application over SMTP&mdash;with SHA-256 hashed API keys, optional HMAC-SHA256 request signing, and per-app rate limits.
+      </p>
+      <div class="spec-grid">
+        <div class="spec-cell">
+          <div class="spec-label">Endpoint</div>
+          <div class="spec-value">POST /send</div>
+        </div>
+        <div class="spec-cell">
+          <div class="spec-label">Authentication</div>
+          <div class="spec-value">X-API-Key + HMAC</div>
+        </div>
+        <div class="spec-cell">
+          <div class="spec-label">Tenant Config</div>
+          <div class="spec-value">TENANT_&lt;APP&gt;</div>
+        </div>
+        <div class="spec-cell">
+          <div class="spec-label">Limits</div>
+          <div class="spec-value">5 MB &middot; 50 recipients</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tabs-section" aria-label="Documentation">
+      <div class="tablist" focusgroup="tablist nomemory" aria-label="Mailbridge integration guide">
+        <button type="button" id="tab-overview" aria-selected="true" focusgroupstart>Overview</button>
+        <button type="button" id="tab-register">1. Register an App</button>
+        <button type="button" id="tab-api">2. Call POST /send</button>
+        <button type="button" id="tab-prompt">3. Client &amp; AI Prompt</button>
+      </div>
+
+      <div class="panels">
+        <!-- Tab 1: Overview -->
+        <div role="tabpanel" aria-labelledby="tab-overview" tabindex="0">
+          <div class="panel-inner">
+            <h2>What Mailbridge Does</h2>
+            <p>
+              Instead of embedding SMTP credentials and MIME boilerplate into every backend or serverless function, your apps send a single authenticated JSON request to <code>POST /send</code>. Mailbridge validates the caller, enforces limits, and delivers the email over SMTP.
+            </p>
+
+            <h3>Request Lifecycle</h3>
+            <div class="pipeline">
+              <div class="step-card">
+                <div class="step-num">01</div>
+                <div class="step-title">Rate Limit</div>
+                <div class="step-desc">Sliding-window check per client IP and per <code>app_id</code>.</div>
+              </div>
+              <div class="step-card">
+                <div class="step-num">02</div>
+                <div class="step-title">Key Auth</div>
+                <div class="step-desc">SHA-256 hash of <code>X-API-Key</code> compared in constant time.</div>
+              </div>
+              <div class="step-card">
+                <div class="step-num">03</div>
+                <div class="step-title">HMAC &amp; Replay</div>
+                <div class="step-desc">Optional <code>X-Signature</code>, timestamp window, and nonce check.</div>
+              </div>
+              <div class="step-card">
+                <div class="step-num">04</div>
+                <div class="step-title">SMTP Delivery</div>
+                <div class="step-desc">Builds MIME message and sends asynchronously via <code>STARTTLS</code> or <code>SSL</code>.</div>
+              </div>
+            </div>
+
+            <h3>Security Highlights</h3>
+            <ul>
+              <li><strong>Zero plaintext API keys on server:</strong> Only SHA-256 <code>key_hash</code> values are stored in environment variables.</li>
+              <li><strong>Per-app isolation:</strong> Each app has its own sender identity (<code>from_name</code>, <code>from_email</code>), rate limit, optional recipient domain allowlist, and optional dedicated SMTP credentials.</li>
+              <li><strong>Abuse guards:</strong> Enforces max body size (5 MB), max recipients (50), max attachments (5 &times; 3 MB), header-injection sanitization, and blocks executable attachments (<code>.exe</code>, <code>.js</code>, <code>.ps1</code>, etc.).</li>
+              <li><strong>Sanitized errors:</strong> Internal SMTP errors are logged server-side and returned as a generic <code>502 Email delivery failed</code>.</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Tab 2: Register an App -->
+        <div role="tabpanel" aria-labelledby="tab-register" hidden="until-found">
+          <div class="panel-inner">
+            <h2>1. Register a Calling App (e.g. <code>molat</code>)</h2>
+            <p>
+              Each calling app gets its own <code>TENANT_&lt;APP&gt;</code> environment variable on Mailbridge. Adding a new app in Vercel never overwrites existing apps.
+            </p>
+
+            <h3>Step 1: Generate credentials locally</h3>
+            <div class="code-wrap">
+              <div class="code-header">
+                <span>bash</span>
+                <button type="button" class="copy-btn" data-copy-target="cmd-gen">Copy</button>
+              </div>
+              <pre><code id="cmd-gen">python3 scripts/generate_key.py molat</code></pre>
+            </div>
+            <p>
+              This outputs the raw <code>X-API-Key</code> and <code>Signing Secret</code> (for your calling app) and a ready-to-paste <code>TENANT_MOLAT=...</code> line (for Mailbridge).
+            </p>
+
+            <h3>Step 2: Add the variable to Mailbridge (Vercel / <code>.env</code>)</h3>
+            <div class="code-wrap">
+              <div class="code-header">
+                <span>env</span>
+                <button type="button" class="copy-btn" data-copy-target="env-tenant">Copy</button>
+              </div>
+              <pre><code id="env-tenant">TENANT_MOLAT={"key_hash":"&lt;64-char-sha256-hex&gt;","signing_secret":"&lt;64-char-hex&gt;","from_name":"Molat","rate_limit_per_min":60}</code></pre>
+            </div>
+
+            <h3>Step 3: Configure SMTP credentials on Mailbridge</h3>
+            <p>
+              If using Gmail, enable 2-Step Verification and create a 16-character <strong>App Password</strong> at <code>myaccount.google.com/apppasswords</code>:
+            </p>
+            <div class="code-wrap">
+              <div class="code-header">
+                <span>env</span>
+                <button type="button" class="copy-btn" data-copy-target="env-smtp">Copy</button>
+              </div>
+              <pre><code id="env-smtp">SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=yourname@gmail.com
+SMTP_PASSWORD=your16charapppassword
+DEFAULT_FROM_EMAIL=yourname@gmail.com
+DEFAULT_FROM_NAME=No-Reply</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Call POST /send -->
+        <div role="tabpanel" aria-labelledby="tab-api" hidden="until-found">
+          <div class="panel-inner">
+            <h2>2. Call <code>POST /send</code></h2>
+            <p>
+              Send a JSON payload with <code>X-API-Key</code> and <code>X-App-Id</code>. If your tenant has a <code>signing_secret</code>, also include <code>X-Timestamp</code>, <code>X-Nonce</code>, and <code>X-Signature</code>.
+            </p>
+
+            <h3>Request Headers</h3>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Header</th>
+                    <th>Required</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>X-API-Key</code></td>
+                    <td>Yes</td>
+                    <td>Raw API key (<code>er_...</code>) issued for the calling app.</td>
+                  </tr>
+                  <tr>
+                    <td><code>X-App-Id</code></td>
+                    <td>Recommended</td>
+                    <td>Tenant identifier (e.g. <code>molat</code>) for direct lookup.</td>
+                  </tr>
+                  <tr>
+                    <td><code>X-Timestamp</code></td>
+                    <td>If HMAC enabled</td>
+                    <td>Unix epoch seconds as a string (default tolerance: &plusmn;60s).</td>
+                  </tr>
+                  <tr>
+                    <td><code>X-Nonce</code></td>
+                    <td>If HMAC enabled</td>
+                    <td>Unique UUID per request (replay protection).</td>
+                  </tr>
+                  <tr>
+                    <td><code>X-Signature</code></td>
+                    <td>If HMAC enabled</td>
+                    <td>Hex <code>HMAC-SHA256(signing_secret, f"{timestamp}.{nonce}.{raw_body}")</code>.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3>Example Request (cURL)</h3>
+            <div class="code-wrap">
+              <div class="code-header">
+                <span>bash</span>
+                <button type="button" class="copy-btn" data-copy-target="cmd-curl">Copy</button>
+              </div>
+              <pre><code id="cmd-curl">curl -X POST https://mailbridge-akdey.vercel.app/send \
+  -H "Content-Type: application/json" \
+  -H "X-App-Id: molat" \
+  -H "X-API-Key: er_your_raw_api_key" \
+  -d '{
+    "to_email": "user@example.com",
+    "subject": "Welcome to Molat",
+    "html_content": "&lt;h1&gt;Hello&lt;/h1&gt;&lt;p&gt;Sent via Mailbridge.&lt;/p&gt;",
+    "text_content": "Hello\nSent via Mailbridge."
+  }'</code></pre>
+            </div>
+
+            <h3>Success Response (<code>200 OK</code>)</h3>
+            <div class="code-wrap">
+              <div class="code-header">
+                <span>json</span>
+              </div>
+              <pre><code>{
+  "status": "sent",
+  "request_id": "a1b2c3d4-...",
+  "app_id": "molat",
+  "recipients": ["user@example.com"]
+}</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 4: Client & AI Prompt -->
+        <div role="tabpanel" aria-labelledby="tab-prompt" hidden="until-found">
+          <div class="panel-inner">
+            <h2>3. Calling App Env &amp; Integration Prompt</h2>
+            <p>
+              Add these environment variables to your calling app (such as <code>molat</code>), or paste the prompt below into your AI coding assistant to wire up the client automatically.
+            </p>
+
+            <h3>Calling App <code>.env</code></h3>
+            <div class="code-wrap">
+              <div class="code-header">
+                <span>env</span>
+                <button type="button" class="copy-btn" data-copy-target="env-client">Copy</button>
+              </div>
+              <pre><code id="env-client">MAILBRIDGE_URL=https://mailbridge-akdey.vercel.app
+MAILBRIDGE_APP_ID=molat
+MAILBRIDGE_API_KEY=er_replace_with_raw_api_key
+MAILBRIDGE_SIGNING_SECRET=replace_with_64_char_hex_signing_secret</code></pre>
+            </div>
+
+            <h3>AI Integration Prompt</h3>
+            <div class="code-wrap">
+              <div class="code-header">
+                <span>prompt</span>
+                <button type="button" class="copy-btn" data-copy-target="ai-prompt">Copy</button>
+              </div>
+              <pre><code id="ai-prompt">Integrate email sending into this application using our Mailbridge HTTP-to-SMTP relay service.
+
+Configuration (read from environment variables, never hardcode):
+- MAILBRIDGE_URL: Base URL of the Mailbridge service (https://mailbridge-akdey.vercel.app)
+- MAILBRIDGE_APP_ID: App identifier for the X-App-Id header (e.g., molat)
+- MAILBRIDGE_API_KEY: Secret API key for the X-API-Key header
+- MAILBRIDGE_SIGNING_SECRET: Optional HMAC-SHA256 signing secret. When set, sign every POST /send request with:
+  - X-Timestamp: current Unix epoch seconds as a string
+  - X-Nonce: unique UUID per request
+  - X-Signature: hex digest of HMAC-SHA256(MAILBRIDGE_SIGNING_SECRET, f"{timestamp}.{nonce}.{raw_json_body}")
+
+API Contract (POST {MAILBRIDGE_URL}/send):
+- Headers:
+  - Content-Type: application/json
+  - X-API-Key: &lt;MAILBRIDGE_API_KEY&gt;
+  - X-App-Id: &lt;MAILBRIDGE_APP_ID&gt; (if set)
+  - X-Timestamp, X-Nonce, X-Signature (if MAILBRIDGE_SIGNING_SECRET is set)
+- JSON Body:
+  - to_email (required): string or array of email strings
+  - subject (required): string (1-998 chars)
+  - html_content (optional): HTML body string
+  - text_content (optional): plain-text body string (at least one of html_content or text_content is required)
+  - reply_to, cc, bcc, attachments (optional)
+- Success Response (200 OK):
+  { "status": "sent", "request_id": "...", "app_id": "...", "recipients": [...] }
+
+Requirements:
+1. Create a reusable email client/helper module following this project's conventions.
+2. Compute the HMAC signature over the exact raw JSON bytes sent in the HTTP request body.
+3. Add the MAILBRIDGE_* variables to .env.example.
+4. Handle non-200 responses and timeouts cleanly without logging secrets.
+5. Add unit tests mocking the HTTP call.</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container footer-inner">
+      <span>Mailbridge &middot; Multi-Tenant HTTP-to-SMTP Relay</span>
+      <span><a href="/health">/health</a> &middot; <a href="https://github.com/akdey/mailbridge" target="_blank" rel="noopener noreferrer">akdey/mailbridge</a></span>
+    </div>
+  </footer>
+
+  <script type="module">
+    if (!Object.hasOwn(HTMLElement.prototype, "focusGroup")) {
+      import("https://cdn.jsdelivr.net/npm/@microsoft/focusgroup-polyfill/+esm")
+        .then(({ polyfill }) => polyfill())
+        .catch(() => {});
+    }
+
+    const tablist = document.querySelector(".tablist");
+    const tabs = Array.from(tablist.querySelectorAll("button"));
+    const panels = Array.from(document.querySelectorAll('[role="tabpanel"]'));
+
+    function selectTab(nextTab, { focus = false } = {}) {
+      for (const tab of tabs) {
+        const isSelected = tab === nextTab;
+        tab.ariaSelected = String(isSelected);
+        tab.toggleAttribute("focusgroupstart", isSelected);
+      }
+      for (const panel of panels) {
+        const matches = panel.getAttribute("aria-labelledby") === nextTab.id;
+        if (matches) {
+          panel.removeAttribute("hidden");
+          panel.setAttribute("tabindex", "0");
+        } else {
+          panel.setAttribute("hidden", "until-found");
+          panel.removeAttribute("tabindex");
+        }
+      }
+      nextTab.scrollIntoView({ block: "nearest", inline: "nearest", container: "nearest" });
+      if (focus) {
+        nextTab.focus();
+      }
+    }
+
+    tablist.addEventListener("click", (event) => {
+      const tab = event.target.closest("button");
+      if (tab) selectTab(tab);
+    });
+
+    tablist.addEventListener("focusin", (event) => {
+      const tab = event.target.closest("button");
+      if (tab && tab.ariaSelected !== "true") {
+        selectTab(tab);
+      }
+    });
+
+    // Fallback arrow-key navigation if focusgroup polyfill is unavailable
+    tablist.addEventListener("keydown", (event) => {
+      if (Object.hasOwn(HTMLElement.prototype, "focusGroup")) return;
+      const idx = tabs.indexOf(document.activeElement);
+      if (idx === -1) return;
+      let nextIdx = null;
+      if (event.key === "ArrowRight") nextIdx = (idx + 1) % tabs.length;
+      else if (event.key === "ArrowLeft") nextIdx = (idx - 1 + tabs.length) % tabs.length;
+      else if (event.key === "Home") nextIdx = 0;
+      else if (event.key === "End") nextIdx = tabs.length - 1;
+      if (nextIdx !== null) {
+        event.preventDefault();
+        selectTab(tabs[nextIdx], { focus: true });
+      }
+    });
+
+    for (const panel of panels) {
+      panel.addEventListener("beforematch", () => {
+        const tabId = panel.getAttribute("aria-labelledby");
+        const tab = tabs.find((t) => t.id === tabId);
+        if (tab) selectTab(tab);
+      });
+    }
+
+    for (const btn of document.querySelectorAll(".copy-btn")) {
+      btn.addEventListener("click", async () => {
+        const target = document.getElementById(btn.dataset.copyTarget);
+        if (!target) return;
+        try {
+          await navigator.clipboard.writeText(target.textContent);
+          const prev = btn.textContent;
+          btn.textContent = "Copied";
+          setTimeout(() => {
+            btn.textContent = prev;
+          }, 1500);
+        } catch {
+          btn.textContent = "Failed";
+        }
+      });
+    }
+  </script>
+</body>
+</html>
