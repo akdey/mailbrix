@@ -148,6 +148,10 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--surface-subtle);
       font-size: 12px;
       color: var(--text-muted);
     }
@@ -156,6 +160,7 @@
       height: 7px;
       border-radius: 50%;
       background: var(--ok);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--ok) 22%, transparent);
     }
 
     /* Hero */
@@ -236,15 +241,18 @@
     }
     .tablist button:hover {
       color: var(--text);
+      background: var(--surface-subtle);
+      border-radius: 6px 6px 0 0;
     }
     .tablist button[aria-selected="true"] {
       color: var(--text);
+      font-weight: 600;
     }
     .tablist button[aria-selected="true"]::after {
       content: "";
       position: absolute;
       inset: auto 0 0;
-      border-block-end: 2px solid var(--text);
+      border-block-end: 2px solid var(--link);
     }
     .tablist button:focus-visible {
       outline: 2px solid var(--link);
@@ -264,10 +272,11 @@
     }
     .panel-inner {
       margin-top: 20px;
-      padding: 24px;
+      padding: 26px;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
     }
     .panel-inner h2 {
       margin: 0 0 8px;
@@ -324,6 +333,11 @@
       font-size: 11.5px;
       color: #a1a1aa;
     }
+    .code-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
     .copy-btn {
       appearance: none;
       background: rgba(255, 255, 255, 0.08);
@@ -334,9 +348,13 @@
       padding: 3px 9px;
       border-radius: 5px;
       cursor: pointer;
+      text-decoration: none;
+      line-height: 1.4;
     }
     .copy-btn:hover {
-      background: rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.16);
+      text-decoration: none;
+      color: #ffffff;
     }
     pre {
       margin: 0;
@@ -639,7 +657,7 @@
         <button type="button" id="tab-overview" aria-selected="true" focusgroupstart>Overview</button>
         <button type="button" id="tab-register">1. Register an App</button>
         <button type="button" id="tab-api">2. Call POST /send</button>
-        <button type="button" id="tab-prompt">3. Client &amp; AI Prompt</button>
+        <button type="button" id="tab-skill">3. Client &amp; Skill</button>
       </div>
 
       <div class="panels">
@@ -853,12 +871,12 @@ DEFAULT_FROM_NAME=No-Reply</code></pre>
           </div>
         </div>
 
-        <!-- Tab 4: Client & AI Prompt -->
-        <div role="tabpanel" aria-labelledby="tab-prompt" hidden="until-found">
+        <!-- Tab 4: Client & Agent Skill -->
+        <div role="tabpanel" aria-labelledby="tab-skill" hidden="until-found">
           <div class="panel-inner">
-            <h2>3. Calling App Env &amp; Integration Prompt</h2>
+            <h2>3. Calling App Env &amp; Agent Skill</h2>
             <p>
-              Add these environment variables to your calling app (such as <code>my-app</code>), or paste the prompt below into your AI coding assistant to wire up the client automatically.
+              Add these environment variables to your calling app (e.g. <code>my-app</code>), and install the <code>SKILL.md</code> below so any AI coding agent in that repo knows how to integrate Mailbridge.
             </p>
 
             <h3>Calling App <code>.env</code></h3>
@@ -873,44 +891,49 @@ MAILBRIDGE_API_KEY=er_replace_with_raw_api_key
 MAILBRIDGE_SIGNING_SECRET=replace_with_64_char_hex_signing_secret</code></pre>
             </div>
 
-            <h3>AI Integration Prompt</h3>
+            <h3>Install Skill in Calling App Repo</h3>
             <div class="code-wrap">
               <div class="code-header">
-                <span>prompt</span>
-                <button type="button" class="copy-btn" data-copy-target="ai-prompt">Copy</button>
+                <span>bash</span>
+                <button type="button" class="copy-btn" data-copy-target="cmd-skill-install">Copy</button>
               </div>
-              <pre><code id="ai-prompt">Integrate email sending into this application using our Mailbridge HTTP-to-SMTP relay service.
+              <pre><code id="cmd-skill-install">mkdir -p .agent/skills/mailbridge &amp;&amp; curl -sSL https://mailbridge-akdey.vercel.app/SKILL.md -o .agent/skills/mailbridge/SKILL.md</code></pre>
+            </div>
 
-Configuration (read from environment variables, never hardcode):
-- MAILBRIDGE_URL: Base URL of the Mailbridge service (https://mailbridge-akdey.vercel.app)
-- MAILBRIDGE_APP_ID: App identifier for the X-App-Id header (e.g., my-app)
-- MAILBRIDGE_API_KEY: Secret API key for the X-API-Key header
-- MAILBRIDGE_SIGNING_SECRET: Optional HMAC-SHA256 signing secret. When set, sign every POST /send request with:
-  - X-Timestamp: current Unix epoch seconds as a string
-  - X-Nonce: unique UUID per request
-  - X-Signature: hex digest of HMAC-SHA256(MAILBRIDGE_SIGNING_SECRET, f"{timestamp}.{nonce}.{raw_json_body}")
+            <h3><code>.agent/skills/mailbridge/SKILL.md</code></h3>
+            <div class="code-wrap">
+              <div class="code-header">
+                <span>markdown</span>
+                <div class="code-actions">
+                  <a class="copy-btn" href="/SKILL.md" download="SKILL.md">Download</a>
+                  <button type="button" class="copy-btn" data-copy-target="agent-skill">Copy</button>
+                </div>
+              </div>
+              <pre><code id="agent-skill">---
+name: mailbridge
+description: Integrates transactional email sending into any application using the Mailbridge HTTP-to-SMTP relay service (API key auth, optional HMAC-SHA256 signing, attachments, and error handling).
+---
 
-API Contract (POST {MAILBRIDGE_URL}/send):
-- Headers:
-  - Content-Type: application/json
-  - X-API-Key: &lt;MAILBRIDGE_API_KEY&gt;
-  - X-App-Id: &lt;MAILBRIDGE_APP_ID&gt; (if set)
-  - X-Timestamp, X-Nonce, X-Signature (if MAILBRIDGE_SIGNING_SECRET is set)
-- JSON Body:
-  - to_email (required): string or array of email strings
-  - subject (required): string (1-998 chars)
-  - html_content (optional): HTML body string
-  - text_content (optional): plain-text body string (at least one of html_content or text_content is required)
-  - reply_to, cc, bcc, attachments (optional)
-- Success Response (200 OK):
-  { "status": "sent", "request_id": "...", "app_id": "...", "recipients": [...] }
+# Mailbridge Email Integration
 
-Requirements:
-1. Create a reusable email client/helper module following this project's conventions.
-2. Compute the HMAC signature over the exact raw JSON bytes sent in the HTTP request body.
-3. Add the MAILBRIDGE_* variables to .env.example.
-4. Handle non-200 responses and timeouts cleanly without logging secrets.
-5. Add unit tests mocking the HTTP call.</code></pre>
+Use this skill when adding transactional email sending to an application via Mailbridge (`https://mailbridge-akdey.vercel.app`).
+
+## 1. Environment Variables
+- `MAILBRIDGE_URL`: Base URL of Mailbridge (`https://mailbridge-akdey.vercel.app`)
+- `MAILBRIDGE_APP_ID`: Tenant identifier sent in `X-App-Id` (e.g., `my-app`)
+- `MAILBRIDGE_API_KEY`: Secret API key sent in `X-API-Key` (`er_...`)
+- `MAILBRIDGE_SIGNING_SECRET`: Optional 64-char hex HMAC-SHA256 secret
+
+## 2. API Contract (`POST {MAILBRIDGE_URL}/send`)
+- **Headers:** `Content-Type: application/json`, `X-API-Key`, `X-App-Id`, plus `X-Timestamp`, `X-Nonce`, `X-Signature` (`HMAC-SHA256(secret, f"{ts}.{nonce}.{raw_json_body}")`) when `MAILBRIDGE_SIGNING_SECRET` is set.
+- **JSON Body:** `to_email` (string or array), `subject`, `html_content` and/or `text_content`, optional `reply_to`, `cc`, `bcc`, `attachments`.
+- **Response (`200 OK`):** `{ "status": "sent", "request_id": "...", "app_id": "...", "recipients": [...] }`
+
+## 3. Requirements
+1. Create a reusable email client module matching the project's conventions.
+2. Compute `X-Signature` over the exact raw JSON bytes sent in the HTTP body.
+3. Document `MAILBRIDGE_*` in `.env.example` and never log secrets.
+4. Add unit tests mocking the HTTP call.</code></pre>
             </div>
           </div>
         </div>
@@ -925,249 +948,261 @@ Requirements:
     </p>
   </footer>
 
-  <script type="module">
-    if (!Object.hasOwn(HTMLElement.prototype, "focusGroup")) {
-      import("https://cdn.jsdelivr.net/npm/@microsoft/focusgroup-polyfill/+esm")
-        .then(({ polyfill }) => polyfill())
-        .catch(() => {});
-    }
-
-    const tablist = document.querySelector(".tablist");
-    const tabs = Array.from(tablist.querySelectorAll("button"));
-    const panels = Array.from(document.querySelectorAll('[role="tabpanel"]'));
-
-    function selectTab(nextTab, { focus = false } = {}) {
-      for (const tab of tabs) {
-        const isSelected = tab === nextTab;
-        tab.ariaSelected = String(isSelected);
-        tab.toggleAttribute("focusgroupstart", isSelected);
+  <script>
+    (function () {
+      const hasFocusGroup = "focusGroup" in HTMLElement.prototype;
+      if (!hasFocusGroup) {
+        try {
+          import("https://cdn.jsdelivr.net/npm/@microsoft/focusgroup-polyfill/+esm")
+            .then(({ polyfill }) => polyfill())
+            .catch(() => {});
+        } catch {}
       }
-      for (const panel of panels) {
-        const matches = panel.getAttribute("aria-labelledby") === nextTab.id;
-        if (matches) {
-          panel.removeAttribute("hidden");
-          panel.setAttribute("tabindex", "0");
-        } else {
-          panel.setAttribute("hidden", "until-found");
-          panel.removeAttribute("tabindex");
+
+      const tablist = document.querySelector(".tablist");
+      const tabs = Array.from(tablist.querySelectorAll("button"));
+      const panels = Array.from(document.querySelectorAll('[role="tabpanel"]'));
+
+      function selectTab(nextTab, { focus = false } = {}) {
+        for (const tab of tabs) {
+          const isSelected = tab === nextTab;
+          tab.ariaSelected = String(isSelected);
+          tab.toggleAttribute("focusgroupstart", isSelected);
+        }
+        for (const panel of panels) {
+          const matches = panel.getAttribute("aria-labelledby") === nextTab.id;
+          if (matches) {
+            panel.removeAttribute("hidden");
+            panel.setAttribute("tabindex", "0");
+          } else {
+            panel.setAttribute("hidden", "until-found");
+            panel.removeAttribute("tabindex");
+          }
+        }
+        try {
+          nextTab.scrollIntoView({ block: "nearest", inline: "nearest", container: "nearest" });
+        } catch {
+          nextTab.scrollIntoView({ block: "nearest", inline: "nearest" });
+        }
+        if (focus) {
+          nextTab.focus();
         }
       }
-      nextTab.scrollIntoView({ block: "nearest", inline: "nearest", container: "nearest" });
-      if (focus) {
-        nextTab.focus();
-      }
-    }
 
-    tablist.addEventListener("click", (event) => {
-      const tab = event.target.closest("button");
-      if (tab) selectTab(tab);
-    });
-
-    tablist.addEventListener("focusin", (event) => {
-      const tab = event.target.closest("button");
-      if (tab && tab.ariaSelected !== "true") {
-        selectTab(tab);
-      }
-    });
-
-    // Fallback arrow-key navigation if focusgroup polyfill is unavailable
-    tablist.addEventListener("keydown", (event) => {
-      if (Object.hasOwn(HTMLElement.prototype, "focusGroup")) return;
-      const idx = tabs.indexOf(document.activeElement);
-      if (idx === -1) return;
-      let nextIdx = null;
-      if (event.key === "ArrowRight") nextIdx = (idx + 1) % tabs.length;
-      else if (event.key === "ArrowLeft") nextIdx = (idx - 1 + tabs.length) % tabs.length;
-      else if (event.key === "Home") nextIdx = 0;
-      else if (event.key === "End") nextIdx = tabs.length - 1;
-      if (nextIdx !== null) {
-        event.preventDefault();
-        selectTab(tabs[nextIdx], { focus: true });
-      }
-    });
-
-    for (const panel of panels) {
-      panel.addEventListener("beforematch", () => {
-        const tabId = panel.getAttribute("aria-labelledby");
-        const tab = tabs.find((t) => t.id === tabId);
+      tablist.addEventListener("click", (event) => {
+        const tab = event.target.closest("button");
         if (tab) selectTab(tab);
       });
-    }
 
-    for (const btn of document.querySelectorAll(".copy-btn")) {
-      btn.addEventListener("click", async () => {
-        const target = document.getElementById(btn.dataset.copyTarget);
-        if (!target) return;
-        const text = target.textContent;
-        const prev = btn.textContent;
-        try {
-          if (navigator.clipboard && window.isSecureContext) {
-            await navigator.clipboard.writeText(text);
-          } else {
-            const ta = document.createElement("textarea");
-            ta.value = text;
-            ta.style.position = "fixed";
-            ta.style.opacity = "0";
-            document.body.appendChild(ta);
-            ta.select();
-            document.execCommand("copy");
-            ta.remove();
-          }
-          btn.textContent = "Copied";
-          setTimeout(() => {
-            btn.textContent = prev;
-          }, 1500);
-        } catch {
-          btn.textContent = "Failed";
+      tablist.addEventListener("focusin", (event) => {
+        const tab = event.target.closest("button");
+        if (tab && tab.ariaSelected !== "true") {
+          selectTab(tab);
         }
       });
-    }
 
-    function randomBytes(length) {
-      const bytes = new Uint8Array(length);
-      crypto.getRandomValues(bytes);
-      return bytes;
-    }
+      tablist.addEventListener("keydown", (event) => {
+        if ("focusGroup" in HTMLElement.prototype) return;
+        const idx = tabs.indexOf(document.activeElement);
+        if (idx === -1) return;
+        let nextIdx = null;
+        if (event.key === "ArrowRight") nextIdx = (idx + 1) % tabs.length;
+        else if (event.key === "ArrowLeft") nextIdx = (idx - 1 + tabs.length) % tabs.length;
+        else if (event.key === "Home") nextIdx = 0;
+        else if (event.key === "End") nextIdx = tabs.length - 1;
+        if (nextIdx !== null) {
+          event.preventDefault();
+          selectTab(tabs[nextIdx], { focus: true });
+        }
+      });
 
-    function toBase64Url(bytes) {
-      let binary = "";
-      for (const b of bytes) binary += String.fromCharCode(b);
-      return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-    }
+      for (const panel of panels) {
+        panel.addEventListener("beforematch", () => {
+          const tabId = panel.getAttribute("aria-labelledby");
+          const tab = tabs.find((t) => t.id === tabId);
+          if (tab) selectTab(tab);
+        });
+      }
 
-    function toHex(bytes) {
-      return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-    }
+      for (const btn of document.querySelectorAll("button.copy-btn")) {
+        btn.addEventListener("click", async () => {
+          const target = document.getElementById(btn.dataset.copyTarget);
+          if (!target) return;
+          const text = target.textContent;
+          const prev = btn.textContent;
+          try {
+            if (navigator.clipboard && window.isSecureContext) {
+              await navigator.clipboard.writeText(text);
+            } else {
+              const ta = document.createElement("textarea");
+              ta.value = text;
+              ta.style.position = "fixed";
+              ta.style.opacity = "0";
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand("copy");
+              ta.remove();
+            }
+            btn.textContent = "Copied";
+            setTimeout(() => {
+              btn.textContent = prev;
+            }, 1500);
+          } catch {
+            btn.textContent = "Failed";
+          }
+        });
+      }
 
-    function sha256Fallback(ascii) {
-      const rightRotate = (value, amount) => (value >>> amount) | (value << (32 - amount));
-      const mathPow = Math.pow;
-      const maxWord = mathPow(2, 32);
-      const lengthProperty = "length";
-      let i, j;
-      let result = "";
-      const words = [];
-      const asciiBitLength = ascii[lengthProperty] * 8;
-      let hash = (sha256Fallback.h = sha256Fallback.h || []);
-      const k = (sha256Fallback.k = sha256Fallback.k || []);
-      let primeCounter = k[lengthProperty];
-      const isComposite = {};
-      for (let candidate = 2; primeCounter < 64; candidate++) {
-        if (!isComposite[candidate]) {
-          for (i = 0; i < 313; i += candidate) isComposite[i] = candidate;
-          hash[primeCounter] = (mathPow(candidate, 0.5) * maxWord) | 0;
-          k[primeCounter++] = (mathPow(candidate, 1 / 3) * maxWord) | 0;
+      function randomBytes(length) {
+        const bytes = new Uint8Array(length);
+        crypto.getRandomValues(bytes);
+        return bytes;
+      }
+
+      function toBase64Url(bytes) {
+        let binary = "";
+        for (const b of bytes) binary += String.fromCharCode(b);
+        return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+      }
+
+      function toHex(bytes) {
+        return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+      }
+
+      function sha256Fallback(ascii) {
+        const rightRotate = (value, amount) => (value >>> amount) | (value << (32 - amount));
+        const mathPow = Math.pow;
+        const maxWord = mathPow(2, 32);
+        const lengthProperty = "length";
+        let i, j;
+        let result = "";
+        const words = [];
+        const asciiBitLength = ascii[lengthProperty] * 8;
+        let hash = (sha256Fallback.h = sha256Fallback.h || []);
+        const k = (sha256Fallback.k = sha256Fallback.k || []);
+        let primeCounter = k[lengthProperty];
+        const isComposite = {};
+        for (let candidate = 2; primeCounter < 64; candidate++) {
+          if (!isComposite[candidate]) {
+            for (i = 0; i < 313; i += candidate) isComposite[i] = candidate;
+            hash[primeCounter] = (mathPow(candidate, 0.5) * maxWord) | 0;
+            k[primeCounter++] = (mathPow(candidate, 1 / 3) * maxWord) | 0;
+          }
+        }
+        ascii += "\x80";
+        while ((ascii[lengthProperty] % 64) - 56) ascii += "\x00";
+        for (i = 0; i < ascii[lengthProperty]; i++) {
+          j = ascii.charCodeAt(i);
+          if (j >> 8) return "";
+          words[i >> 2] |= j << (((3 - i) % 4) * 8);
+        }
+        words[words[lengthProperty]] = (asciiBitLength / maxWord) | 0;
+        words[words[lengthProperty]] = asciiBitLength;
+        for (j = 0; j < words[lengthProperty]; ) {
+          const w = words.slice(j, (j += 16));
+          const oldHash = hash;
+          hash = hash.slice(0, 8);
+          for (i = 0; i < 64; i++) {
+            const w15 = w[i - 15], w2 = w[i - 2];
+            const a = hash[0], e = hash[4];
+            const temp1 =
+              hash[7] +
+              (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25)) +
+              ((e & hash[5]) ^ (~e & hash[6])) +
+              k[i] +
+              (w[i] =
+                i < 16
+                  ? w[i]
+                  : (w[i - 16] +
+                      (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3)) +
+                      w[i - 7] +
+                      (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10))) |
+                    0);
+            const temp2 =
+              (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22)) +
+              ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+            hash = [(temp1 + temp2) | 0].concat(hash);
+            hash[4] = (hash[4] + temp1) | 0;
+          }
+          for (i = 0; i < 8; i++) hash[i] = (hash[i] + oldHash[i]) | 0;
+        }
+        for (i = 0; i < 8; i++) {
+          for (j = 3; j + 1; j--) {
+            const b = (hash[i] >> (j * 8)) & 255;
+            result += (b < 16 ? 0 : "") + b.toString(16);
+          }
+        }
+        return result;
+      }
+
+      async function sha256Hex(text) {
+        const data = new TextEncoder().encode(text);
+        if (window.crypto && window.crypto.subtle) {
+          const digest = await window.crypto.subtle.digest("SHA-256", data);
+          return toHex(new Uint8Array(digest));
+        }
+        return sha256Fallback(unescape(encodeURIComponent(text)));
+      }
+
+      async function generateCredentials() {
+        const btn = document.getElementById("gen-btn");
+        try {
+          const rawId = document.getElementById("gen-app-id").value.trim() || "my-app";
+          const fromName = document.getElementById("gen-from-name").value.trim();
+          const rateLimit = Math.max(1, parseInt(document.getElementById("gen-rate-limit").value, 10) || 60);
+          const useHmac = document.getElementById("gen-hmac").checked;
+
+          const suffix = rawId.replace(/[^A-Za-z0-9]+/g, "_").replace(/^_+|_+$/g, "").toUpperCase() || "APP";
+          const envVarName = `TENANT_${suffix}`;
+
+          const rawApiKey = `er_${toBase64Url(randomBytes(32))}`;
+          const keyHash = await sha256Hex(rawApiKey);
+          const signingSecret = useHmac ? toHex(randomBytes(32)) : null;
+
+          const tenantConfig = {};
+          if (suffix.toLowerCase() !== rawId) {
+            tenantConfig.app_id = rawId;
+          }
+          tenantConfig.key_hash = keyHash;
+          if (signingSecret) {
+            tenantConfig.signing_secret = signingSecret;
+          }
+          if (fromName) {
+            tenantConfig.from_name = fromName;
+          }
+          tenantConfig.rate_limit_per_min = rateLimit;
+
+          document.getElementById("gen-server-out").textContent =
+            `${envVarName}=${JSON.stringify(tenantConfig)}`;
+
+          const clientLines = [
+            `MAILBRIDGE_URL=${window.location.origin}`,
+            `MAILBRIDGE_APP_ID=${rawId}`,
+            `MAILBRIDGE_API_KEY=${rawApiKey}`,
+          ];
+          if (signingSecret) {
+            clientLines.push(`MAILBRIDGE_SIGNING_SECRET=${signingSecret}`);
+          }
+          document.getElementById("gen-client-out").textContent = clientLines.join("\n");
+          const out = document.getElementById("gen-output");
+          out.hidden = false;
+          out.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          btn.textContent = "Generated ✓";
+          setTimeout(() => {
+            btn.textContent = "Generate Credentials";
+          }, 1500);
+        } catch (err) {
+          btn.textContent = "Error generating keys";
+          console.error(err);
         }
       }
-      ascii += "\x80";
-      while ((ascii[lengthProperty] % 64) - 56) ascii += "\x00";
-      for (i = 0; i < ascii[lengthProperty]; i++) {
-        j = ascii.charCodeAt(i);
-        if (j >> 8) return "";
-        words[i >> 2] |= j << (((3 - i) % 4) * 8);
+
+      document.getElementById("gen-btn").addEventListener("click", generateCredentials);
+
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/sw.js").catch(() => {});
       }
-      words[words[lengthProperty]] = (asciiBitLength / maxWord) | 0;
-      words[words[lengthProperty]] = asciiBitLength;
-      for (j = 0; j < words[lengthProperty]; ) {
-        const w = words.slice(j, (j += 16));
-        const oldHash = hash;
-        hash = hash.slice(0, 8);
-        for (i = 0; i < 64; i++) {
-          const w15 = w[i - 15], w2 = w[i - 2];
-          const a = hash[0], e = hash[4];
-          const temp1 =
-            hash[7] +
-            (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25)) +
-            ((e & hash[5]) ^ (~e & hash[6])) +
-            k[i] +
-            (w[i] =
-              i < 16
-                ? w[i]
-                : (w[i - 16] +
-                    (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3)) +
-                    w[i - 7] +
-                    (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10))) |
-                  0);
-          const temp2 =
-            (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22)) +
-            ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
-          hash = [(temp1 + temp2) | 0].concat(hash);
-          hash[4] = (hash[4] + temp1) | 0;
-        }
-        for (i = 0; i < 8; i++) hash[i] = (hash[i] + oldHash[i]) | 0;
-      }
-      for (i = 0; i < 8; i++) {
-        for (j = 3; j + 1; j--) {
-          const b = (hash[i] >> (j * 8)) & 255;
-          result += (b < 16 ? 0 : "") + b.toString(16);
-        }
-      }
-      return result;
-    }
-
-    async function sha256Hex(text) {
-      const data = new TextEncoder().encode(text);
-      if (window.crypto && window.crypto.subtle) {
-        const digest = await window.crypto.subtle.digest("SHA-256", data);
-        return toHex(new Uint8Array(digest));
-      }
-      return sha256Fallback(unescape(encodeURIComponent(text)));
-    }
-
-    async function generateCredentials() {
-      const btn = document.getElementById("gen-btn");
-      try {
-        const rawId = document.getElementById("gen-app-id").value.trim() || "my-app";
-        const fromName = document.getElementById("gen-from-name").value.trim();
-        const rateLimit = Math.max(1, parseInt(document.getElementById("gen-rate-limit").value, 10) || 60);
-        const useHmac = document.getElementById("gen-hmac").checked;
-
-        const suffix = rawId.replace(/[^A-Za-z0-9]+/g, "_").replace(/^_+|_+$/g, "").toUpperCase() || "APP";
-        const envVarName = `TENANT_${suffix}`;
-
-        const rawApiKey = `er_${toBase64Url(randomBytes(32))}`;
-        const keyHash = await sha256Hex(rawApiKey);
-        const signingSecret = useHmac ? toHex(randomBytes(32)) : null;
-
-        const tenantConfig = {};
-        if (suffix.toLowerCase() !== rawId) {
-          tenantConfig.app_id = rawId;
-        }
-        tenantConfig.key_hash = keyHash;
-        if (signingSecret) {
-          tenantConfig.signing_secret = signingSecret;
-        }
-        if (fromName) {
-          tenantConfig.from_name = fromName;
-        }
-        tenantConfig.rate_limit_per_min = rateLimit;
-
-        document.getElementById("gen-server-out").textContent =
-          `${envVarName}=${JSON.stringify(tenantConfig)}`;
-
-        const clientLines = [
-          `MAILBRIDGE_URL=${window.location.origin}`,
-          `MAILBRIDGE_APP_ID=${rawId}`,
-          `MAILBRIDGE_API_KEY=${rawApiKey}`,
-        ];
-        if (signingSecret) {
-          clientLines.push(`MAILBRIDGE_SIGNING_SECRET=${signingSecret}`);
-        }
-        document.getElementById("gen-client-out").textContent = clientLines.join("\n");
-        const out = document.getElementById("gen-output");
-        out.hidden = false;
-        out.scrollIntoView({ behavior: "smooth", block: "nearest" });
-      } catch (err) {
-        btn.textContent = "Error generating keys";
-        console.error(err);
-      }
-    }
-
-    document.getElementById("gen-btn").addEventListener("click", generateCredentials);
-
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(() => {});
-    }
+    })();
   </script>
 </body>
 </html>

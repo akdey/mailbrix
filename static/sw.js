@@ -1,6 +1,5 @@
-const CACHE_NAME = "mailbridge-shell-v1";
+const CACHE_NAME = "mailbridge-shell-v2";
 const SHELL_ASSETS = [
-  "/",
   "/manifest.webmanifest",
   "/icon.svg",
   "/icon-192.png",
@@ -29,18 +28,7 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
-  if (url.pathname === "/health" || url.pathname === "/send") return;
-
-  if (url.pathname === "/") {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
-          return response;
-        })
-        .catch(() => caches.match("/"))
-    );
+  if (url.pathname === "/" || url.pathname === "/health" || url.pathname === "/send" || url.pathname === "/SKILL.md") {
     return;
   }
 

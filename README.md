@@ -124,7 +124,7 @@ curl -X POST http://localhost:3000/send \
 See the [`examples/`](examples/) directory for:
 - [examples/send_email.py](examples/send_email.py) — Zero-dependency Python sample client (supports API key + HMAC signing + attachments)
 - [examples/.env.example](examples/.env.example) — Calling app environment variables (`MAILBRIDGE_URL`, `MAILBRIDGE_APP_ID`, `MAILBRIDGE_API_KEY`, `MAILBRIDGE_SIGNING_SECRET`)
-- [examples/PROMPT.md](examples/PROMPT.md) — Ready-to-use prompt to integrate Mailbridge into another project
+- [examples/SKILL.md](examples/SKILL.md) — Agent skill (`SKILL.md`) to integrate Mailbridge into any project
 
 ---
 

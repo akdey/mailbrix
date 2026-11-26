@@ -61,14 +61,22 @@ async def security_and_size_middleware(request: Request, call_next):
     return response
 
 
-_STATIC_DIR = Path(__file__).resolve().parent / "static"
+_BASE_DIR = Path(__file__).resolve().parent
+_STATIC_DIR = _BASE_DIR / "static"
 _INDEX_HTML_PATH = _STATIC_DIR / "index.html"
+_SKILL_MD_PATH = _BASE_DIR / "examples" / "SKILL.md"
 
 
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
 def index_page():
     """Serve the Mailbridge documentation and integration landing page."""
     return HTMLResponse(content=_INDEX_HTML_PATH.read_text(encoding="utf-8"))
+
+
+@app.get("/SKILL.md", include_in_schema=False)
+def agent_skill():
+    """Serve the Mailbridge agent SKILL.md for calling apps."""
+    return FileResponse(_SKILL_MD_PATH, media_type="text/markdown; charset=utf-8")
 
 
 @app.get("/manifest.webmanifest", include_in_schema=False)

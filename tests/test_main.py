@@ -77,6 +77,10 @@ def test_pwa_assets():
     assert sw.status_code == 200
     assert "mailbridge-shell" in sw.text
 
+    skill = client.get("/SKILL.md")
+    assert skill.status_code == 200
+    assert "name: mailbridge" in skill.text
+
 
 def test_send_unauthorized():
     response = client.post(
