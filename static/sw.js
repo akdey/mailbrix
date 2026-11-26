@@ -1,5 +1,7 @@
-const CACHE_NAME = "mailbridge-shell-v2";
+const CACHE_NAME = "mailbridge-shell-v3";
 const SHELL_ASSETS = [
+  "/styles.css",
+  "/app.js",
   "/manifest.webmanifest",
   "/icon.svg",
   "/icon-192.png",

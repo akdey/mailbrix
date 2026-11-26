@@ -79,6 +79,18 @@ def agent_skill():
     return FileResponse(_SKILL_MD_PATH, media_type="text/markdown; charset=utf-8")
 
 
+@app.get("/styles.css", include_in_schema=False)
+def styles_css():
+    """Serve the landing page stylesheet."""
+    return FileResponse(_STATIC_DIR / "styles.css", media_type="text/css; charset=utf-8")
+
+
+@app.get("/app.js", include_in_schema=False)
+def app_js():
+    """Serve the landing page script."""
+    return FileResponse(_STATIC_DIR / "app.js", media_type="application/javascript; charset=utf-8")
+
+
 @app.get("/manifest.webmanifest", include_in_schema=False)
 def web_manifest():
     """Serve the PWA web app manifest."""
