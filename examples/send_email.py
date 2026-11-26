@@ -5,7 +5,7 @@ without extra dependencies.
 
 Usage:
     export MAILBRIDGE_URL="http://localhost:3000"
-    export MAILBRIDGE_APP_ID="molat"
+    export MAILBRIDGE_APP_ID="my-app"
     export MAILBRIDGE_API_KEY="er_your_raw_api_key"
     export MAILBRIDGE_SIGNING_SECRET="your_hmac_signing_secret"  # optional
     python3 examples/send_email.py

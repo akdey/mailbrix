@@ -1,6 +1,6 @@
 # Prompt to Integrate Mailbridge into Another App
 
-Copy and paste the prompt below into your AI coding assistant when working in a calling application (e.g., `molat`):
+Copy and paste the prompt below into your AI coding assistant when working in a calling application (e.g., `my-app`):
 
 ---
 
@@ -9,7 +9,7 @@ Integrate email sending into this application using our Mailbridge HTTP-to-SMTP 
 
 Configuration (read from environment variables, never hardcode):
 - MAILBRIDGE_URL: Base URL of the Mailbridge service (e.g., https://mailbridge-akdey.vercel.app)
-- MAILBRIDGE_APP_ID: App identifier for the X-App-Id header (e.g., molat)
+- MAILBRIDGE_APP_ID: App identifier for the X-App-Id header (e.g., my-app)
 - MAILBRIDGE_API_KEY: Secret API key for the X-API-Key header
 - MAILBRIDGE_SIGNING_SECRET: Optional HMAC-SHA256 signing secret. When set, sign every POST /send request with:
   - X-Timestamp: current Unix epoch seconds as a string

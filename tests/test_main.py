@@ -176,11 +176,11 @@ def test_smtp_error_is_sanitized():
 
 
 def test_tenant_prefix_env_discovery(monkeypatch):
-    molat_key = "er_molat_secret_key"
+    app_alpha_key = "er_alpha_secret_key"
     billing_key = "er_billing_secret_key"
     monkeypatch.setenv(
-        "TENANT_MOLAT",
-        json.dumps({"key_hash": hash_api_key(molat_key), "from_name": "Molat"}),
+        "TENANT_ALPHA",
+        json.dumps({"key_hash": hash_api_key(app_alpha_key), "from_name": "Alpha"}),
     )
     monkeypatch.setenv(
         "TENANT_BILLING_APP",
@@ -192,7 +192,7 @@ def test_tenant_prefix_env_discovery(monkeypatch):
     )
 
     tenants = Settings().get_tenants()
-    assert "molat" in tenants
-    assert tenants["molat"].from_name == "Molat"
+    assert "alpha" in tenants
+    assert tenants["alpha"].from_name == "Alpha"
     assert "billing-app" in tenants
     assert tenants["billing-app"].from_name == "Billing"

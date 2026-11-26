@@ -419,6 +419,94 @@
       justify-content: space-between;
       gap: 12px;
     }
+
+    /* Interactive Key Generator */
+    .gen-card {
+      margin: 12px 0 18px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface-subtle);
+    }
+    .gen-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .field input[type="text"],
+    .field input[type="number"] {
+      width: 100%;
+      padding: 7px 10px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border-strong);
+      border-radius: 6px;
+    }
+    .field input:focus-visible {
+      outline: 2px solid var(--link);
+      outline-offset: 1px;
+    }
+    .gen-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .checkbox-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 13px;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+    .primary-btn {
+      appearance: none;
+      background: var(--accent);
+      color: var(--accent-fg);
+      border: 0;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 550;
+      cursor: pointer;
+    }
+    .primary-btn:hover {
+      opacity: 0.9;
+    }
+    .gen-note {
+      margin: 10px 0 0;
+      font-size: 12px;
+      color: var(--text-subtle);
+    }
+    .gen-output[hidden] {
+      display: none;
+    }
+    .callout {
+      margin: 12px 0 18px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--text);
+      border-radius: var(--radius);
+      background: var(--surface-subtle);
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .callout strong {
+      color: var(--text);
+    }
   </style>
 </head>
 <body>
@@ -517,33 +605,72 @@
         <!-- Tab 2: Register an App -->
         <div role="tabpanel" aria-labelledby="tab-register" hidden="until-found">
           <div class="panel-inner">
-            <h2>1. Register a Calling App (e.g. <code>molat</code>)</h2>
+            <h2>1. Register a Calling App (e.g. <code>my-app</code>)</h2>
             <p>
               Each calling app gets its own <code>TENANT_&lt;APP&gt;</code> environment variable on Mailbridge. Adding a new app in Vercel never overwrites existing apps.
             </p>
 
-            <h3>Step 1: Generate credentials locally</h3>
+            <h3>Step 1: Generate Credentials (In-Browser)</h3>
+            <div class="gen-card">
+              <div class="gen-grid">
+                <div class="field">
+                  <label for="gen-app-id">App ID</label>
+                  <input id="gen-app-id" type="text" value="my-app" placeholder="my-app" autocomplete="off" spellcheck="false">
+                </div>
+                <div class="field">
+                  <label for="gen-from-name">From Name (optional)</label>
+                  <input id="gen-from-name" type="text" value="My App" placeholder="My App" autocomplete="off">
+                </div>
+                <div class="field">
+                  <label for="gen-rate-limit">Rate Limit / min</label>
+                  <input id="gen-rate-limit" type="number" value="60" min="1" max="10000">
+                </div>
+              </div>
+              <div class="gen-actions">
+                <label class="checkbox-label">
+                  <input id="gen-hmac" type="checkbox" checked>
+                  <span>Include HMAC signing secret (recommended)</span>
+                </label>
+                <button type="button" id="gen-btn" class="primary-btn">Generate Credentials</button>
+              </div>
+              <p class="gen-note">
+                Runs 100% locally in your browser using Web Crypto (<code>crypto.getRandomValues</code> + <code>SHA-256</code>). Nothing is sent to the server. Every click generates a brand-new random key and hash.
+              </p>
+            </div>
+
+            <div id="gen-output" class="gen-output" hidden>
+              <h3>Add to Mailbridge (Vercel Env / <code>.env</code>)</h3>
+              <div class="code-wrap">
+                <div class="code-header">
+                  <span>env (server)</span>
+                  <button type="button" class="copy-btn" data-copy-target="gen-server-out">Copy</button>
+                </div>
+                <pre><code id="gen-server-out"></code></pre>
+              </div>
+              <div class="callout">
+                <strong>Using this hosted instance?</strong> You cannot add environment variables to this deployment yourself. Share the <code>TENANT_&lt;APP&gt;</code> line above privately with the Mailbridge creator/maintainer to register your app (never share it in a public issue if <code>signing_secret</code> is enabled). Keep <code>MAILBRIDGE_API_KEY</code> strictly in your own app.
+              </div>
+
+              <h3>Give to Calling App (keep secret)</h3>
+              <div class="code-wrap">
+                <div class="code-header">
+                  <span>env (client)</span>
+                  <button type="button" class="copy-btn" data-copy-target="gen-client-out">Copy</button>
+                </div>
+                <pre><code id="gen-client-out"></code></pre>
+              </div>
+            </div>
+
+            <h3>CLI Alternative</h3>
             <div class="code-wrap">
               <div class="code-header">
                 <span>bash</span>
                 <button type="button" class="copy-btn" data-copy-target="cmd-gen">Copy</button>
               </div>
-              <pre><code id="cmd-gen">python3 scripts/generate_key.py molat</code></pre>
-            </div>
-            <p>
-              This outputs the raw <code>X-API-Key</code> and <code>Signing Secret</code> (for your calling app) and a ready-to-paste <code>TENANT_MOLAT=...</code> line (for Mailbridge).
-            </p>
-
-            <h3>Step 2: Add the variable to Mailbridge (Vercel / <code>.env</code>)</h3>
-            <div class="code-wrap">
-              <div class="code-header">
-                <span>env</span>
-                <button type="button" class="copy-btn" data-copy-target="env-tenant">Copy</button>
-              </div>
-              <pre><code id="env-tenant">TENANT_MOLAT={"key_hash":"&lt;64-char-sha256-hex&gt;","signing_secret":"&lt;64-char-hex&gt;","from_name":"Molat","rate_limit_per_min":60}</code></pre>
+              <pre><code id="cmd-gen">python3 scripts/generate_key.py my-app</code></pre>
             </div>
 
-            <h3>Step 3: Configure SMTP credentials on Mailbridge</h3>
+            <h3>Step 2: Configure SMTP credentials on Mailbridge</h3>
             <p>
               If using Gmail, enable 2-Step Verification and create a 16-character <strong>App Password</strong> at <code>myaccount.google.com/apppasswords</code>:
             </p>
@@ -589,7 +716,7 @@ DEFAULT_FROM_NAME=No-Reply</code></pre>
                   <tr>
                     <td><code>X-App-Id</code></td>
                     <td>Recommended</td>
-                    <td>Tenant identifier (e.g. <code>molat</code>) for direct lookup.</td>
+                    <td>Tenant identifier (e.g. <code>my-app</code>) for direct lookup.</td>
                   </tr>
                   <tr>
                     <td><code>X-Timestamp</code></td>
@@ -618,11 +745,11 @@ DEFAULT_FROM_NAME=No-Reply</code></pre>
               </div>
               <pre><code id="cmd-curl">curl -X POST https://mailbridge-akdey.vercel.app/send \
   -H "Content-Type: application/json" \
-  -H "X-App-Id: molat" \
+  -H "X-App-Id: my-app" \
   -H "X-API-Key: er_your_raw_api_key" \
   -d '{
     "to_email": "user@example.com",
-    "subject": "Welcome to Molat",
+    "subject": "Welcome",
     "html_content": "&lt;h1&gt;Hello&lt;/h1&gt;&lt;p&gt;Sent via Mailbridge.&lt;/p&gt;",
     "text_content": "Hello\nSent via Mailbridge."
   }'</code></pre>
@@ -636,7 +763,7 @@ DEFAULT_FROM_NAME=No-Reply</code></pre>
               <pre><code>{
   "status": "sent",
   "request_id": "a1b2c3d4-...",
-  "app_id": "molat",
+  "app_id": "my-app",
   "recipients": ["user@example.com"]
 }</code></pre>
             </div>
@@ -648,7 +775,7 @@ DEFAULT_FROM_NAME=No-Reply</code></pre>
           <div class="panel-inner">
             <h2>3. Calling App Env &amp; Integration Prompt</h2>
             <p>
-              Add these environment variables to your calling app (such as <code>molat</code>), or paste the prompt below into your AI coding assistant to wire up the client automatically.
+              Add these environment variables to your calling app (such as <code>my-app</code>), or paste the prompt below into your AI coding assistant to wire up the client automatically.
             </p>
 
             <h3>Calling App <code>.env</code></h3>
@@ -658,7 +785,7 @@ DEFAULT_FROM_NAME=No-Reply</code></pre>
                 <button type="button" class="copy-btn" data-copy-target="env-client">Copy</button>
               </div>
               <pre><code id="env-client">MAILBRIDGE_URL=https://mailbridge-akdey.vercel.app
-MAILBRIDGE_APP_ID=molat
+MAILBRIDGE_APP_ID=my-app
 MAILBRIDGE_API_KEY=er_replace_with_raw_api_key
 MAILBRIDGE_SIGNING_SECRET=replace_with_64_char_hex_signing_secret</code></pre>
             </div>
@@ -673,7 +800,7 @@ MAILBRIDGE_SIGNING_SECRET=replace_with_64_char_hex_signing_secret</code></pre>
 
 Configuration (read from environment variables, never hardcode):
 - MAILBRIDGE_URL: Base URL of the Mailbridge service (https://mailbridge-akdey.vercel.app)
-- MAILBRIDGE_APP_ID: App identifier for the X-App-Id header (e.g., molat)
+- MAILBRIDGE_APP_ID: App identifier for the X-App-Id header (e.g., my-app)
 - MAILBRIDGE_API_KEY: Secret API key for the X-API-Key header
 - MAILBRIDGE_SIGNING_SECRET: Optional HMAC-SHA256 signing secret. When set, sign every POST /send request with:
   - X-Timestamp: current Unix epoch seconds as a string
@@ -800,6 +927,71 @@ Requirements:
         }
       });
     }
+
+    function randomBytes(length) {
+      const bytes = new Uint8Array(length);
+      crypto.getRandomValues(bytes);
+      return bytes;
+    }
+
+    function toBase64Url(bytes) {
+      let binary = "";
+      for (const b of bytes) binary += String.fromCharCode(b);
+      return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    }
+
+    function toHex(bytes) {
+      return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+    }
+
+    async function sha256Hex(text) {
+      const data = new TextEncoder().encode(text);
+      const digest = await crypto.subtle.digest("SHA-256", data);
+      return toHex(new Uint8Array(digest));
+    }
+
+    async function generateCredentials() {
+      const rawId = document.getElementById("gen-app-id").value.trim() || "my-app";
+      const fromName = document.getElementById("gen-from-name").value.trim();
+      const rateLimit = Math.max(1, parseInt(document.getElementById("gen-rate-limit").value, 10) || 60);
+      const useHmac = document.getElementById("gen-hmac").checked;
+
+      const suffix = rawId.replace(/[^A-Za-z0-9]+/g, "_").replace(/^_+|_+$/g, "").toUpperCase() || "APP";
+      const envVarName = `TENANT_${suffix}`;
+
+      const rawApiKey = `er_${toBase64Url(randomBytes(32))}`;
+      const keyHash = await sha256Hex(rawApiKey);
+      const signingSecret = useHmac ? toHex(randomBytes(32)) : null;
+
+      const tenantConfig = {};
+      if (suffix.toLowerCase() !== rawId) {
+        tenantConfig.app_id = rawId;
+      }
+      tenantConfig.key_hash = keyHash;
+      if (signingSecret) {
+        tenantConfig.signing_secret = signingSecret;
+      }
+      if (fromName) {
+        tenantConfig.from_name = fromName;
+      }
+      tenantConfig.rate_limit_per_min = rateLimit;
+
+      document.getElementById("gen-server-out").textContent =
+        `${envVarName}=${JSON.stringify(tenantConfig)}`;
+
+      const clientLines = [
+        `MAILBRIDGE_URL=${window.location.origin}`,
+        `MAILBRIDGE_APP_ID=${rawId}`,
+        `MAILBRIDGE_API_KEY=${rawApiKey}`,
+      ];
+      if (signingSecret) {
+        clientLines.push(`MAILBRIDGE_SIGNING_SECRET=${signingSecret}`);
+      }
+      document.getElementById("gen-client-out").textContent = clientLines.join("\n");
+      document.getElementById("gen-output").hidden = false;
+    }
+
+    document.getElementById("gen-btn").addEventListener("click", generateCredentials);
   </script>
 </body>
 </html>
