@@ -26,20 +26,7 @@
     });
   }
 
-  // 2. Live health check
-  const statusDot = document.getElementById("status-dot");
-  const statusText = document.getElementById("status-text");
-  fetch("/health")
-    .then((r) => (r.ok ? r.json() : Promise.reject()))
-    .then(() => {
-      if (statusText) statusText.textContent = "Operational";
-    })
-    .catch(() => {
-      if (statusDot) statusDot.classList.add("error");
-      if (statusText) statusText.textContent = "Offline";
-    });
-
-  // 3. Tabs (accessible focusgroup + fallback)
+  // 2. Tabs (accessible focusgroup + fallback)
   if (!("focusGroup" in HTMLElement.prototype)) {
     try {
       import("https://cdn.jsdelivr.net/npm/@microsoft/focusgroup-polyfill/+esm")
@@ -280,24 +267,7 @@
     });
   }
 
-  // 6. PWA Install Prompt + Service Worker
-  let deferredPrompt = null;
-  const installBtn = document.getElementById("install-btn");
-  window.addEventListener("beforeinstallprompt", (event) => {
-    event.preventDefault();
-    deferredPrompt = event;
-    if (installBtn) installBtn.hidden = false;
-  });
-  if (installBtn) {
-    installBtn.addEventListener("click", async () => {
-      if (!deferredPrompt) return;
-      deferredPrompt.prompt();
-      await deferredPrompt.userChoice;
-      deferredPrompt = null;
-      installBtn.hidden = true;
-    });
-  }
-
+  // 6. Service Worker
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/sw.js").catch(() => {});
   }

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Mailbridge — HTTP-to-SMTP Email Relay</title>
-  <meta name="description" content="Multi-tenant FastAPI HTTP-to-SMTP email relay microservice with hashed API keys, HMAC request signing, and per-app rate limits.">
+  <meta name="description" content="Multi-tenant FastAPI HTTP-to-SMTP email relay with hashed API keys, HMAC signing, and per-app rate limits.">
   <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#09090b" media="(prefers-color-scheme: dark)">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -18,16 +18,10 @@
   <header class="topbar">
     <div class="container topbar-inner">
       <div class="brand">
-        <span class="brand-mark">M</span>
+        <img class="brand-logo" src="/icon.svg" alt="" width="26" height="26">
         <span>Mailbridge</span>
-        <span class="badge">v2.0</span>
       </div>
       <div class="topbar-actions">
-        <span class="status-pill" title="Service status">
-          <span id="status-dot" class="status-dot" aria-hidden="true"></span>
-          <span id="status-text" class="status-text">Checking...</span>
-        </span>
-        <button type="button" id="install-btn" class="icon-btn install-btn" hidden>Install</button>
         <button type="button" id="theme-toggle" class="icon-btn" aria-label="Toggle color theme">Auto</button>
         <a class="icon-btn hide-mobile" href="/health">Health</a>
         <a class="icon-btn" href="https://github.com/akdey/mailbridge" target="_blank" rel="noopener noreferrer">GitHub</a>
@@ -39,7 +33,7 @@
     <section class="hero">
       <h1>Authenticated HTTP-to-SMTP email relay.</h1>
       <p>
-        A lightweight, multi-tenant FastAPI microservice for sending transactional email from any application over SMTP&mdash;with SHA-256 hashed API keys, optional HMAC-SHA256 request signing, and per-app rate limits.
+        Send transactional email from any app via a single <code>POST /send</code> endpoint&mdash;with hashed API keys, optional HMAC signing, and per-app rate limits.
       </p>
       <div class="spec-grid">
         <div class="spec-cell">
@@ -47,11 +41,11 @@
           <div class="spec-value">POST /send</div>
         </div>
         <div class="spec-cell">
-          <div class="spec-label">Authentication</div>
+          <div class="spec-label">Auth</div>
           <div class="spec-value">X-API-Key + HMAC</div>
         </div>
         <div class="spec-cell">
-          <div class="spec-label">Tenant Config</div>
+          <div class="spec-label">Tenants</div>
           <div class="spec-value">TENANT_&lt;APP&gt;</div>
         </div>
         <div class="spec-cell">
@@ -64,61 +58,52 @@
     <section class="tabs-section" aria-label="Documentation">
       <div class="tablist" focusgroup="tablist nomemory" aria-label="Mailbridge integration guide">
         <button type="button" id="tab-overview" aria-selected="true" focusgroupstart>Overview</button>
-        <button type="button" id="tab-register">1. Register an App</button>
-        <button type="button" id="tab-api">2. Call POST /send</button>
+        <button type="button" id="tab-register">1. Register App</button>
+        <button type="button" id="tab-api">2. Send Email</button>
         <button type="button" id="tab-skill">3. Client &amp; Skill</button>
       </div>
 
       <div class="panels">
         <div role="tabpanel" aria-labelledby="tab-overview" tabindex="0">
           <div class="panel-inner">
-            <h2>What Mailbridge Does</h2>
-            <p>
-              Instead of embedding SMTP credentials and MIME boilerplate into every backend or serverless function, your apps send a single authenticated JSON request to <code>POST /send</code>. Mailbridge validates the caller, enforces limits, and delivers the email over SMTP.
-            </p>
-
-            <h3>Request Lifecycle</h3>
+            <h2>Request Lifecycle</h2>
             <div class="pipeline">
               <div class="step-card">
                 <div class="step-num">01</div>
                 <div class="step-title">Rate Limit</div>
-                <div class="step-desc">Sliding-window check per client IP and per <code>app_id</code>.</div>
+                <div class="step-desc">Sliding window per IP and <code>app_id</code>.</div>
               </div>
               <div class="step-card">
                 <div class="step-num">02</div>
                 <div class="step-title">Key Auth</div>
-                <div class="step-desc">SHA-256 hash of <code>X-API-Key</code> compared in constant time.</div>
+                <div class="step-desc">SHA-256 <code>X-API-Key</code> constant-time check.</div>
               </div>
               <div class="step-card">
                 <div class="step-num">03</div>
                 <div class="step-title">HMAC &amp; Replay</div>
-                <div class="step-desc">Optional <code>X-Signature</code>, timestamp window, and nonce check.</div>
+                <div class="step-desc">Optional signature, timestamp, and nonce check.</div>
               </div>
               <div class="step-card">
                 <div class="step-num">04</div>
                 <div class="step-title">SMTP Delivery</div>
-                <div class="step-desc">Builds MIME message and sends asynchronously via <code>STARTTLS</code> or <code>SSL</code>.</div>
+                <div class="step-desc">Async MIME delivery via <code>STARTTLS</code> / <code>SSL</code>.</div>
               </div>
             </div>
 
-            <h3>Security Highlights</h3>
+            <h3>Security</h3>
             <ul>
-              <li><strong>Zero plaintext API keys on server:</strong> Only SHA-256 <code>key_hash</code> values are stored in environment variables.</li>
-              <li><strong>Per-app isolation:</strong> Each app has its own sender identity (<code>from_name</code>, <code>from_email</code>), rate limit, optional recipient domain allowlist, and optional dedicated SMTP credentials.</li>
-              <li><strong>Abuse guards:</strong> Enforces max body size (5 MB), max recipients (50), max attachments (5 &times; 3 MB), header-injection sanitization, and blocks executable attachments (<code>.exe</code>, <code>.js</code>, <code>.ps1</code>, etc.).</li>
-              <li><strong>Sanitized errors:</strong> Internal SMTP errors are logged server-side and returned as a generic <code>502 Email delivery failed</code>.</li>
+              <li><strong>Hashed keys:</strong> Only SHA-256 <code>key_hash</code> values are stored on the server.</li>
+              <li><strong>Per-app isolation:</strong> Dedicated <code>from_name</code>, <code>from_email</code>, rate limit, and optional SMTP/domain allowlist.</li>
+              <li><strong>Abuse guards:</strong> 5 MB max body, 50 recipients, 5 attachments (&le; 3 MB each), no executable extensions.</li>
             </ul>
           </div>
         </div>
 
         <div role="tabpanel" aria-labelledby="tab-register" hidden="until-found">
           <div class="panel-inner">
-            <h2>1. Register a Calling App (e.g. <code>my-app</code>)</h2>
-            <p>
-              Each calling app gets its own <code>TENANT_&lt;APP&gt;</code> environment variable on Mailbridge. Adding a new app in Vercel never overwrites existing apps.
-            </p>
+            <h2>Register Your App</h2>
+            <p>Generate credentials in your browser. Nothing leaves your device.</p>
 
-            <h3>Step 1: Generate Credentials (In-Browser)</h3>
             <div class="gen-card">
               <div class="gen-grid">
                 <div class="field">
@@ -137,17 +122,14 @@
               <div class="gen-actions">
                 <label class="checkbox-label">
                   <input id="gen-hmac" type="checkbox" checked>
-                  <span>Include HMAC signing secret (recommended)</span>
+                  <span>Include HMAC signing secret</span>
                 </label>
                 <button type="button" id="gen-btn" class="primary-btn">Generate Credentials</button>
               </div>
-              <p class="gen-note">
-                Runs 100% locally in your browser using Web Crypto (<code>crypto.getRandomValues</code> + <code>SHA-256</code>). Nothing is sent to the server. Every click generates a brand-new random key and hash.
-              </p>
             </div>
 
             <div id="gen-output" class="gen-output" hidden>
-              <h3>Add to Mailbridge (Vercel Env / <code>.env</code>)</h3>
+              <h3>1. Send to Mailbridge (Server Env)</h3>
               <div class="code-wrap">
                 <div class="code-header">
                   <span>env (server)</span>
@@ -156,10 +138,10 @@
                 <pre><code id="gen-server-out"></code></pre>
               </div>
               <div class="callout">
-                <strong>Using this hosted instance?</strong> You cannot add environment variables to this deployment yourself. Share the <code>TENANT_&lt;APP&gt;</code> line above privately with the Mailbridge creator/maintainer to register your app (never share it in a public issue if <code>signing_secret</code> is enabled). Keep <code>MAILBRIDGE_API_KEY</code> strictly in your own app.
+                <strong>Using this hosted instance?</strong> Share the <code>TENANT_&lt;APP&gt;</code> line above privately with the Mailbridge maintainer to register your app. Keep <code>MAILBRIDGE_API_KEY</code> strictly in your own app.
               </div>
 
-              <h3>Give to Calling App (keep secret)</h3>
+              <h3>2. Add to Your Calling App (<code>.env</code>)</h3>
               <div class="code-wrap">
                 <div class="code-header">
                   <span>env (client)</span>
@@ -169,42 +151,38 @@
               </div>
             </div>
 
-            <h3>CLI Alternative</h3>
-            <div class="code-wrap">
-              <div class="code-header">
-                <span>bash</span>
-                <button type="button" class="copy-btn" data-copy-target="cmd-gen">Copy</button>
-              </div>
-              <pre><code id="cmd-gen">python3 scripts/generate_key.py my-app</code></pre>
-            </div>
-
-            <h3>Step 2: Configure SMTP credentials on Mailbridge</h3>
-            <p>
-              If using Gmail, enable 2-Step Verification and create a 16-character <strong>App Password</strong> at <code>myaccount.google.com/apppasswords</code>:
-            </p>
-            <div class="code-wrap">
-              <div class="code-header">
-                <span>env</span>
-                <button type="button" class="copy-btn" data-copy-target="env-smtp">Copy</button>
-              </div>
-              <pre><code id="env-smtp">SMTP_HOST=smtp.gmail.com
+            <details class="self-host-details">
+              <summary>Self-Hosting Mailbridge? (SMTP &amp; CLI Setup)</summary>
+              <div class="self-host-body">
+                <p>Configure your SMTP provider (for Gmail, use a 16-char App Password from <code>myaccount.google.com/apppasswords</code>):</p>
+                <div class="code-wrap">
+                  <div class="code-header">
+                    <span>env</span>
+                    <button type="button" class="copy-btn" data-copy-target="env-smtp">Copy</button>
+                  </div>
+                  <pre><code id="env-smtp">SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=yourname@gmail.com
 SMTP_PASSWORD=your16charapppassword
 DEFAULT_FROM_EMAIL=yourname@gmail.com
 DEFAULT_FROM_NAME=No-Reply</code></pre>
-            </div>
+                </div>
+                <p>CLI key generator alternative:</p>
+                <div class="code-wrap">
+                  <div class="code-header">
+                    <span>bash</span>
+                    <button type="button" class="copy-btn" data-copy-target="cmd-gen">Copy</button>
+                  </div>
+                  <pre><code id="cmd-gen">python3 scripts/generate_key.py my-app</code></pre>
+                </div>
+              </div>
+            </details>
           </div>
         </div>
 
         <div role="tabpanel" aria-labelledby="tab-api" hidden="until-found">
           <div class="panel-inner">
-            <h2>2. Call <code>POST /send</code></h2>
-            <p>
-              Send a JSON payload with <code>X-API-Key</code> and <code>X-App-Id</code>. If your tenant has a <code>signing_secret</code>, also include <code>X-Timestamp</code>, <code>X-Nonce</code>, and <code>X-Signature</code>.
-            </p>
-
-            <h3>Request Headers</h3>
+            <h2><code>POST /send</code></h2>
             <div class="table-wrap">
               <table>
                 <thead>
@@ -218,33 +196,33 @@ DEFAULT_FROM_NAME=No-Reply</code></pre>
                   <tr>
                     <td><code>X-API-Key</code></td>
                     <td>Yes</td>
-                    <td>Raw API key (<code>er_...</code>) issued for the calling app.</td>
+                    <td>Raw API key (<code>er_...</code>).</td>
                   </tr>
                   <tr>
                     <td><code>X-App-Id</code></td>
                     <td>Recommended</td>
-                    <td>Tenant identifier (e.g. <code>my-app</code>) for direct lookup.</td>
+                    <td>Tenant ID (e.g. <code>my-app</code>).</td>
                   </tr>
                   <tr>
                     <td><code>X-Timestamp</code></td>
-                    <td>If HMAC enabled</td>
-                    <td>Unix epoch seconds as a string (default tolerance: &plusmn;60s).</td>
+                    <td>If HMAC</td>
+                    <td>Unix epoch seconds (&plusmn;60s).</td>
                   </tr>
                   <tr>
                     <td><code>X-Nonce</code></td>
-                    <td>If HMAC enabled</td>
-                    <td>Unique UUID per request (replay protection).</td>
+                    <td>If HMAC</td>
+                    <td>Unique UUID per request.</td>
                   </tr>
                   <tr>
                     <td><code>X-Signature</code></td>
-                    <td>If HMAC enabled</td>
-                    <td>Hex <code>HMAC-SHA256(signing_secret, f"{timestamp}.{nonce}.{raw_body}")</code>.</td>
+                    <td>If HMAC</td>
+                    <td><code>HMAC-SHA256(secret, "{ts}.{nonce}.{raw_body}")</code></td>
                   </tr>
                 </tbody>
               </table>
             </div>
 
-            <h3>Example Request (cURL)</h3>
+            <h3>Example Request</h3>
             <div class="code-wrap">
               <div class="code-header">
                 <span>bash</span>
@@ -261,42 +239,15 @@ DEFAULT_FROM_NAME=No-Reply</code></pre>
     "text_content": "Hello\nSent via Mailbridge."
   }'</code></pre>
             </div>
-
-            <h3>Success Response (<code>200 OK</code>)</h3>
-            <div class="code-wrap">
-              <div class="code-header">
-                <span>json</span>
-              </div>
-              <pre><code>{
-  "status": "sent",
-  "request_id": "a1b2c3d4-...",
-  "app_id": "my-app",
-  "recipients": ["user@example.com"]
-}</code></pre>
-            </div>
           </div>
         </div>
 
         <div role="tabpanel" aria-labelledby="tab-skill" hidden="until-found">
           <div class="panel-inner">
-            <h2>3. Calling App Env &amp; Agent Skill</h2>
-            <p>
-              Add these environment variables to your calling app (e.g. <code>my-app</code>), and install the <code>SKILL.md</code> below so any AI coding agent in that repo knows how to integrate Mailbridge.
-            </p>
+            <h2>Client Env &amp; Agent Skill</h2>
+            <p>Install <code>SKILL.md</code> in your calling app repo so any AI coding agent can integrate Mailbridge automatically.</p>
 
-            <h3>Calling App <code>.env</code></h3>
-            <div class="code-wrap">
-              <div class="code-header">
-                <span>env</span>
-                <button type="button" class="copy-btn" data-copy-target="env-client">Copy</button>
-              </div>
-              <pre><code id="env-client">MAILBRIDGE_URL=https://mailbridge-akdey.vercel.app
-MAILBRIDGE_APP_ID=my-app
-MAILBRIDGE_API_KEY=er_replace_with_raw_api_key
-MAILBRIDGE_SIGNING_SECRET=replace_with_64_char_hex_signing_secret</code></pre>
-            </div>
-
-            <h3>Install Skill in Calling App Repo</h3>
+            <h3>Install Skill</h3>
             <div class="code-wrap">
               <div class="code-header">
                 <span>bash</span>
@@ -348,7 +299,7 @@ Use this skill when adding transactional email sending to an application via Mai
 
   <footer>
     <p style="margin: 0;">
-      Mailbridge &bull; Engineered by
+      Mailbridge v2.0 &bull; Engineered by
       <a class="creator-link" href="https://portfolio.akdey.vercel.app/" target="_blank" rel="noopener noreferrer">AMIT KUMAR DEY</a>
     </p>
   </footer>
