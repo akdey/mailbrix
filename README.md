@@ -134,3 +134,9 @@ See the [`examples/`](examples/) directory for:
 pip install -r requirements.txt pytest httpx
 pytest
 ```
+
+---
+
+<p align="center">
+  &copy; 2026 <strong><a href="https://portfolio.akdey.vercel.app/">AMIT KUMAR DEY</a></strong>. All rights reserved.
+</p>
