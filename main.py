@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Optional
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, status
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from pydantic import ValidationError
 
 from config import Settings, get_settings
@@ -61,13 +61,48 @@ async def security_and_size_middleware(request: Request, call_next):
     return response
 
 
-_INDEX_HTML_PATH = Path(__file__).resolve().parent / "static" / "index.html"
+_STATIC_DIR = Path(__file__).resolve().parent / "static"
+_INDEX_HTML_PATH = _STATIC_DIR / "index.html"
 
 
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
 def index_page():
     """Serve the Mailbridge documentation and integration landing page."""
     return HTMLResponse(content=_INDEX_HTML_PATH.read_text(encoding="utf-8"))
+
+
+@app.get("/manifest.webmanifest", include_in_schema=False)
+def web_manifest():
+    """Serve the PWA web app manifest."""
+    return FileResponse(_STATIC_DIR / "manifest.webmanifest", media_type="application/manifest+json")
+
+
+@app.get("/sw.js", include_in_schema=False)
+def service_worker():
+    """Serve the PWA service worker at root scope."""
+    return FileResponse(
+        _STATIC_DIR / "sw.js",
+        media_type="application/javascript",
+        headers={"Service-Worker-Allowed": "/"},
+    )
+
+
+@app.get("/icon.svg", include_in_schema=False)
+def icon_svg():
+    """Serve the SVG app icon."""
+    return FileResponse(_STATIC_DIR / "icon.svg", media_type="image/svg+xml")
+
+
+@app.get("/icon-192.png", include_in_schema=False)
+def icon_192():
+    """Serve the 192x192 PNG app icon."""
+    return FileResponse(_STATIC_DIR / "icon-192.png", media_type="image/png")
+
+
+@app.get("/icon-512.png", include_in_schema=False)
+def icon_512():
+    """Serve the 512x512 PNG app icon."""
+    return FileResponse(_STATIC_DIR / "icon-512.png", media_type="image/png")
 
 
 @app.get("/health")

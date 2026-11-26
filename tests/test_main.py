@@ -68,6 +68,16 @@ def test_index_page():
     assert "Mailbridge" in response.text
 
 
+def test_pwa_assets():
+    manifest = client.get("/manifest.webmanifest")
+    assert manifest.status_code == 200
+    assert manifest.json()["short_name"] == "Mailbridge"
+
+    sw = client.get("/sw.js")
+    assert sw.status_code == 200
+    assert "mailbridge-shell" in sw.text
+
+
 def test_send_unauthorized():
     response = client.post(
         "/send",
