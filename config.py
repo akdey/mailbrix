@@ -1,4 +1,5 @@
 import json
+import os
 from functools import lru_cache
 from typing import Dict, List, Optional
 
@@ -67,13 +68,30 @@ class Settings(BaseSettings):
     default_from_name: str = "No-Reply"
 
     def get_tenants(self) -> Dict[str, TenantConfig]:
-        """Parse TENANTS_JSON into a mapping of app_id -> TenantConfig."""
-        if not self.tenants_json.strip():
-            return {}
-        raw = json.loads(self.tenants_json)
-        if not isinstance(raw, dict):
-            raise ValueError("TENANTS_JSON must be a JSON object mapping app_id -> config")
-        return {app_id: TenantConfig(**cfg) for app_id, cfg in raw.items()}
+        """Load tenants from TENANTS_JSON and individual TENANT_* environment variables."""
+        tenants: Dict[str, TenantConfig] = {}
+
+        if self.tenants_json.strip():
+            raw = json.loads(self.tenants_json)
+            if not isinstance(raw, dict):
+                raise ValueError("TENANTS_JSON must be a JSON object mapping app_id -> config")
+            for app_id, cfg in raw.items():
+                tenants[app_id] = TenantConfig(**cfg)
+
+        for env_key, env_val in os.environ.items():
+            if not env_key.startswith("TENANT_") or not env_val.strip():
+                continue
+            suffix = env_key[len("TENANT_"):]
+            if not suffix:
+                continue
+            raw_cfg = json.loads(env_val)
+            if not isinstance(raw_cfg, dict):
+                raise ValueError(f"{env_key} must be a JSON object")
+            cfg = dict(raw_cfg)
+            app_id = cfg.pop("app_id", None) or suffix.lower()
+            tenants[app_id] = TenantConfig(**cfg)
+
+        return tenants
 
 
 @lru_cache

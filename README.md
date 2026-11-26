@@ -4,7 +4,7 @@ A lightweight, multi-tenant **FastAPI** HTTP-to-SMTP email relay microservice bu
 
 ## Features
 
-- **Multi-App / Multi-Tenant Support**: Register multiple calling applications in `TENANTS_JSON`, each with its own `app_id`, sender identity (`from_name`, `from_email`), rate limit, recipient domain allowlist, and optional dedicated SMTP credentials.
+- **Multi-App / Multi-Tenant Support**: Register calling applications via individual `TENANT_<APP>` environment variables (ideal for Vercel) or `TENANTS_JSON`, each with its own `app_id`, sender identity (`from_name`, `from_email`), rate limit, recipient domain allowlist, and optional dedicated SMTP credentials.
 - **Hashed API Key Authentication**: Authenticates requests via `X-API-Key` (and optional `X-App-Id`) using SHA-256 key hashes and constant-time comparison (`hmac.compare_digest`).
 - **HMAC Request Signing & Replay Protection**: Optional per-tenant or global `HMAC-SHA256` request signing (`X-Timestamp`, `X-Nonce`, `X-Signature`) with timestamp tolerance and nonce deduplication.
 - **Rate Limiting & Payload Guards**: Built-in sliding-window rate limiting per IP and per `app_id`, plus configurable limits for request size, recipient count, attachment count/size, and blocked executable extensions.
@@ -29,7 +29,7 @@ Copy `.env.example` to `.env` (or set these in your hosting provider's environme
 cp .env.example .env
 ```
 
-Set `TENANTS_JSON` and your `SMTP_*` credentials.
+Set the generated `TENANT_<APP>` variable (or `TENANTS_JSON`) and your `SMTP_*` credentials.
 
 ### 3. Run Locally
 
@@ -51,7 +51,8 @@ The included `vercel.json` routes all requests to `main.py` using `@vercel/pytho
 |---|---|---|
 | `ENV` | `development` | Set to `production` to disable `/docs`, `/redoc`, and `/openapi.json` |
 | `APP_NAME` | `Email Relay Service` | Service name returned by `/health` |
-| `TENANTS_JSON` | `""` | JSON object mapping `app_id` to tenant config |
+| `TENANT_<APP>` | — | Per-app JSON config (auto-discovered from env; optional `app_id` overrides suffix) |
+| `TENANTS_JSON` | `""` | Optional JSON object mapping `app_id` to tenant config |
 | `REQUIRE_HMAC_SIGNATURE` | `false` | Require HMAC signing for all tenants |
 | `HMAC_TOLERANCE_SECONDS` | `60` | Allowed clock skew for `X-Timestamp` |
 | `IP_RATE_LIMIT_PER_MIN` | `120` | Max requests per minute per client IP |

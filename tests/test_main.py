@@ -166,3 +166,26 @@ def test_smtp_error_is_sanitized():
         )
     assert response.status_code == 502
     assert response.json()["detail"] == "Email delivery failed"
+
+
+def test_tenant_prefix_env_discovery(monkeypatch):
+    molat_key = "er_molat_secret_key"
+    billing_key = "er_billing_secret_key"
+    monkeypatch.setenv(
+        "TENANT_MOLAT",
+        json.dumps({"key_hash": hash_api_key(molat_key), "from_name": "Molat"}),
+    )
+    monkeypatch.setenv(
+        "TENANT_BILLING_APP",
+        json.dumps({
+            "app_id": "billing-app",
+            "key_hash": hash_api_key(billing_key),
+            "from_name": "Billing",
+        }),
+    )
+
+    tenants = Settings().get_tenants()
+    assert "molat" in tenants
+    assert tenants["molat"].from_name == "Molat"
+    assert "billing-app" in tenants
+    assert tenants["billing-app"].from_name == "Billing"
