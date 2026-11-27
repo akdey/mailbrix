@@ -1,6 +1,6 @@
-# Email Relay Service
+# Mailbrix
 
-A lightweight, multi-tenant **FastAPI** HTTP-to-SMTP email relay microservice built for **Vercel** and containerized deployments.
+**Mailbrix** is a lightweight, multi-tenant **FastAPI** HTTP-to-SMTP email relay microservice built for **Vercel** and containerized deployments.
 
 ## Features
 
@@ -50,8 +50,8 @@ The included `vercel.json` routes all requests to `main.py` using `@vercel/pytho
 | Variable | Default | Description |
 |---|---|---|
 | `ENV` | `development` | Set to `production` to disable `/docs`, `/redoc`, and `/openapi.json` |
-| `APP_NAME` | `Email Relay Service` | Service name returned by `/health` |
-| `TENANT_<APP>` | — | Per-app JSON config (auto-discovered from env; optional `app_id` overrides suffix) |
+| `APP_NAME` | `Mailbrix` | Service name returned by `/health` |
+| `TENANT_<APP>` | — | Per-app JSON config (`key_hash`, optional `signing_secret`, `from_name`, `from_email`, `rate_limit_per_min`, and optional per-app `smtp_user`, `smtp_password`, `smtp_host`, `smtp_port`, `smtp_use_ssl` to send from a custom email) |
 | `TENANTS_JSON` | `""` | Optional JSON object mapping `app_id` to tenant config |
 | `REQUIRE_HMAC_SIGNATURE` | `false` | Require HMAC signing for all tenants |
 | `HMAC_TOLERANCE_SECONDS` | `60` | Allowed clock skew for `X-Timestamp` |
@@ -79,7 +79,7 @@ Returns service status:
 ```json
 {
   "status": "operational",
-  "service": "Email Relay Service"
+  "service": "Mailbrix"
 }
 ```
 

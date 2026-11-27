@@ -40,7 +40,7 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    app_name: str = "Email Relay Service"
+    app_name: str = "Mailbrix"
     env: str = "development"  # Set to "production" to disable /docs and /openapi.json
 
     # Multi-tenant registry as a JSON string in env: {"app-id": {"key_hash": "...", ...}}
