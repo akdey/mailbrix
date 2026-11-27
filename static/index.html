@@ -22,8 +22,7 @@
         <span>Mailbrix</span>
       </div>
       <div class="topbar-actions">
-        <button type="button" id="theme-toggle" class="icon-btn" aria-label="Toggle color theme">Auto</button>
-        <a class="icon-btn hide-mobile" href="/health">Health</a>
+        <button type="button" id="theme-toggle" class="icon-btn theme-btn" aria-label="Theme: Auto" title="Theme: Auto"></button>
         <a class="icon-btn" href="https://github.com/akdey/mailbrix" target="_blank" rel="noopener noreferrer">GitHub</a>
       </div>
     </div>
@@ -56,11 +55,14 @@
     </section>
 
     <section class="tabs-section" aria-label="Documentation">
-      <div class="tablist" focusgroup="tablist nomemory" aria-label="Mailbrix integration guide">
-        <button type="button" id="tab-overview" aria-selected="true" focusgroupstart>Overview</button>
-        <button type="button" id="tab-register">1. Register App</button>
-        <button type="button" id="tab-api">2. Send Email</button>
-        <button type="button" id="tab-skill">3. Client &amp; Skill</button>
+      <div class="tablist-wrap">
+        <div class="tablist" focusgroup="tablist nomemory" aria-label="Mailbrix integration guide">
+          <button type="button" id="tab-overview" aria-selected="true" focusgroupstart>Overview</button>
+          <button type="button" id="tab-register">1. Register App</button>
+          <button type="button" id="tab-api">2. Send Email</button>
+          <button type="button" id="tab-skill">3. Client &amp; Skill</button>
+        </div>
+        <button type="button" class="tablist-next" aria-label="Scroll to more tabs" hidden>&rsaquo;</button>
       </div>
 
       <div class="panels">

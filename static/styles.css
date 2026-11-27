@@ -197,6 +197,17 @@ a:hover {
   text-decoration: none;
 }
 
+.icon-btn.theme-btn {
+  width: 32px;
+  padding: 0;
+}
+
+.icon-btn.theme-btn svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
 .install-btn {
   border-color: var(--accent);
   color: var(--accent);
@@ -260,22 +271,115 @@ a:hover {
 }
 
 /* Tabs */
+@property --fade-start {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+@property --fade-end {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
 .tabs-section {
   padding: 6px 0 48px;
 }
 
+.tablist-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+}
+
 .tablist {
   display: flex;
+  flex: 1;
+  min-width: 0;
   overflow-x: auto;
   gap: 4px;
-  border-bottom: 1px solid var(--border);
   scrollbar-width: none;
   scroll-snap-type: inline proximity;
   -webkit-overflow-scrolling: touch;
+  --fade-size: 2.25rem;
+  --fade-dir: right;
+  --fade-start-pos: 0;
+  --fade-end-pos: 100%;
+  scroll-padding-inline: var(--fade-size);
+  mask:
+    linear-gradient(black, black) no-clip subtract,
+    linear-gradient(to var(--fade-dir), black, transparent) var(--fade-start-pos) 0 / var(--fade-start) 100% no-repeat no-clip,
+    linear-gradient(to var(--fade-dir), transparent, black) var(--fade-end-pos) 0 / var(--fade-end) 100% no-repeat no-clip;
+  animation: reveal-fade-start linear both, hide-fade-end linear both;
+  animation-timeline: scroll(self inline);
+  animation-range: 0 var(--fade-size), calc(100% - var(--fade-size)) 100%;
+  transition: --fade-start 0.2s ease, --fade-end 0.2s ease;
+}
+
+.tablist.more-start {
+  --fade-start: var(--fade-size);
+}
+
+.tablist.more-end {
+  --fade-end: var(--fade-size);
+}
+
+@keyframes reveal-fade-start {
+  to {
+    --fade-start: var(--fade-size);
+  }
+}
+
+@keyframes hide-fade-end {
+  from {
+    --fade-end: var(--fade-size);
+  }
 }
 
 .tablist::-webkit-scrollbar {
   display: none;
+}
+
+.tablist-next {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.12);
+  z-index: 2;
+}
+
+.tablist-next[hidden] {
+  display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tablist-next {
+    animation: tab-nudge 1.6s ease-in-out infinite;
+  }
+}
+
+@keyframes tab-nudge {
+  0%, 100% {
+    transform: translateY(-50%) translateX(0);
+  }
+  50% {
+    transform: translateY(-50%) translateX(3px);
+  }
 }
 
 .tablist button {

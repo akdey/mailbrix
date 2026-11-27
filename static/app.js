@@ -5,10 +5,20 @@
   if (savedTheme === "light" || savedTheme === "dark") {
     document.documentElement.setAttribute("data-theme", savedTheme);
   }
+  const THEME_ICONS = {
+    auto: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3v18"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" stroke="none"/></svg>',
+    light: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>',
+    dark: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>',
+  };
+
   function updateThemeLabel() {
     if (!themeBtn) return;
     const current = document.documentElement.getAttribute("data-theme");
-    themeBtn.textContent = current === "dark" ? "Dark" : current === "light" ? "Light" : "Auto";
+    const mode = current === "dark" ? "dark" : current === "light" ? "light" : "auto";
+    const label = mode === "dark" ? "Theme: Dark" : mode === "light" ? "Theme: Light" : "Theme: Auto";
+    themeBtn.innerHTML = THEME_ICONS[mode];
+    themeBtn.setAttribute("aria-label", label);
+    themeBtn.setAttribute("title", label);
   }
   updateThemeLabel();
   if (themeBtn) {
@@ -57,11 +67,40 @@
         }
       }
       try {
-        nextTab.scrollIntoView({ block: "nearest", inline: "nearest", container: "nearest" });
+        nextTab.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center", container: "nearest" });
       } catch {
-        nextTab.scrollIntoView({ block: "nearest", inline: "nearest" });
+        nextTab.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
       }
       if (focus) nextTab.focus();
+    }
+
+    const nextHintBtn = document.querySelector(".tablist-next");
+    const supportsScrollTimeline = CSS.supports("animation-timeline", "scroll()");
+    if (tabs.length > 1) {
+      const firstTab = tabs[0];
+      const lastTab = tabs[tabs.length - 1];
+      const edgeObserver = new IntersectionObserver(
+        (entries) => {
+          for (const { target, intersectionRatio } of entries) {
+            const hasMore = intersectionRatio < 1;
+            if (!supportsScrollTimeline) {
+              tablist.classList.toggle(target === firstTab ? "more-start" : "more-end", hasMore);
+            }
+            if (target === lastTab && nextHintBtn) {
+              nextHintBtn.hidden = !hasMore;
+            }
+          }
+        },
+        { root: tablist, threshold: 1, rootMargin: "1px" }
+      );
+      edgeObserver.observe(firstTab);
+      edgeObserver.observe(lastTab);
+    }
+
+    if (nextHintBtn) {
+      nextHintBtn.addEventListener("click", () => {
+        tablist.scrollBy({ left: 140, behavior: "smooth" });
+      });
     }
 
     tablist.addEventListener("click", (event) => {
