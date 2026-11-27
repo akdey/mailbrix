@@ -131,6 +131,30 @@ def build_mime_message(
     return message
 
 
+def _open_and_send(
+    host: str,
+    port: int,
+    use_ssl: bool,
+    user: str,
+    password: str,
+    timeout: int,
+    from_email: str,
+    recipients: List[str],
+    raw_message: str,
+) -> None:
+    if use_ssl or port == 465:
+        with smtplib.SMTP_SSL(host, port, timeout=timeout) as server:
+            server.login(user, password)
+            server.sendmail(from_email, recipients, raw_message)
+    else:
+        with smtplib.SMTP(host, port, timeout=timeout) as server:
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+            server.login(user, password)
+            server.sendmail(from_email, recipients, raw_message)
+
+
 def send_smtp_message(
     host: str,
     port: int,
@@ -143,14 +167,31 @@ def send_smtp_message(
     raw_message: str,
 ) -> None:
     """Send a serialized MIME message over SMTP (SSL or STARTTLS)."""
-    if use_ssl or port == 465:
-        with smtplib.SMTP_SSL(host, port, timeout=timeout) as server:
-            server.login(user, password)
-            server.sendmail(from_email, recipients, raw_message)
-    else:
-        with smtplib.SMTP(host, port, timeout=timeout) as server:
-            server.ehlo()
-            server.starttls()
-            server.ehlo()
-            server.login(user, password)
-            server.sendmail(from_email, recipients, raw_message)
+    clean_host = host.strip()
+    clean_user = user.strip()
+    clean_password = password.replace("\r", "").replace("\n", "").strip()
+
+    try:
+        _open_and_send(
+            clean_host,
+            port,
+            use_ssl,
+            clean_user,
+            clean_password,
+            timeout,
+            from_email,
+            recipients,
+            raw_message,
+        )
+    except smtplib.SMTPServerDisconnected:
+        _open_and_send(
+            clean_host,
+            port,
+            use_ssl,
+            clean_user,
+            clean_password,
+            timeout,
+            from_email,
+            recipients,
+            raw_message,
+        )
